@@ -1,0 +1,26 @@
+# Entorno virtual
+env/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Base de datos local (SQLite, sin costos de nube)
+db.sqlite3
+db.sqlite3-journal
+
+# Archivos subidos por usuarios
+media/
+
+# Archivos estáticos recolectados
+staticfiles/
+
+# Node / frontend
+node_modules/
+
+# Variables de entorno / secretos
+.env
+
+# Editor
+.vscode/
