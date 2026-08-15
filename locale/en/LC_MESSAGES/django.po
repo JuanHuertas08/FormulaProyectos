@@ -1,0 +1,454 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FormulaProyectos\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Login"
+msgstr "Login"
+
+msgid "Entrar"
+msgstr "Sign in"
+
+msgid "¿Aún no tienes una cuenta?"
+msgstr "Don't have an account yet?"
+
+msgid "Crear cuenta nueva"
+msgstr "Create new account"
+
+msgid "¿Olvidaste tu contraseña?"
+msgstr "Forgot your password?"
+
+msgid "Dashboard - Formulador de Proyectos"
+msgstr "Dashboard - Project Formulator"
+
+msgid "Formulador de Proyectos"
+msgstr "Project Formulator"
+
+msgid "Bienvenido, <strong>%(username)s</strong>"
+msgstr "Welcome, <strong>%(username)s</strong>"
+
+msgid "Cerrar Sesión"
+msgstr "Log Out"
+
+msgid "Iniciar Sesión"
+msgstr "Sign In"
+
+msgid "¿Tienes una nueva idea?"
+msgstr "Do you have a new idea?"
+
+msgid ""
+"Inicia nuestro asistente de <strong>6 pasos</strong> para formalizar tu "
+"nuevo proyecto de manera profesional."
+msgstr ""
+"Start our <strong>6-step</strong> wizard to professionally formalize your "
+"new project."
+
+msgid "Iniciar Nuevo Proyecto"
+msgstr "Start New Project"
+
+msgid "Mi Perfil"
+msgstr "My Profile"
+
+msgid "Nombre:"
+msgstr "Name:"
+
+msgid "Email:"
+msgstr "Email:"
+
+msgid "Ciudad:"
+msgstr "City:"
+
+msgid "No definida"
+msgstr "Not set"
+
+msgid "Información Adicional"
+msgstr "Additional Information"
+
+msgid "Teléfono:"
+msgstr "Phone:"
+
+msgid "País:"
+msgstr "Country:"
+
+msgid "Nacimiento:"
+msgstr "Birth date:"
+
+msgid "Usuario Activo"
+msgstr "Active User"
+
+msgid "Mis Proyectos"
+msgstr "My Projects"
+
+msgid "Creado:"
+msgstr "Created:"
+
+msgid "Aún no has creado ningún proyecto."
+msgstr "You haven't created any projects yet."
+
+msgid "Acceso al Formulador"
+msgstr "Access the Formulator"
+
+msgid "Debes iniciar sesión para comenzar a crear y gestionar tus proyectos."
+msgstr "You must sign in to start creating and managing your projects."
+
+msgid "Entrar al Sistema"
+msgstr "Enter the System"
+
+msgid "Registro"
+msgstr "Registration"
+
+msgid "Sistema"
+msgstr "System"
+
+msgid "Crear Nueva Cuenta"
+msgstr "Create New Account"
+
+msgid "Finalizar Registro"
+msgstr "Complete Registration"
+
+msgid "¿Ya tienes una cuenta?"
+msgstr "Already have an account?"
+
+msgid "Inicia sesión"
+msgstr "Sign in"
+
+msgid "Recuperar Contraseña"
+msgstr "Reset Password"
+
+msgid ""
+"Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer"
+" tu contraseña."
+msgstr ""
+"Enter your email address and we'll send you instructions to reset your "
+"password."
+
+msgid "Enviar Instrucciones"
+msgstr "Send Instructions"
+
+msgid "Volver al inicio de sesión"
+msgstr "Back to sign in"
+
+msgid "Correo Enviado"
+msgstr "Email Sent"
+
+msgid ""
+"Te hemos enviado instrucciones para restablecer tu contraseña, si existe una"
+" cuenta con ese correo. Revisa tu bandeja de entrada (y la carpeta de spam)."
+msgstr ""
+"We've sent you instructions to reset your password, if an account exists "
+"with that email. Check your inbox (and spam folder)."
+
+msgid "Nueva Contraseña"
+msgstr "New Password"
+
+msgid "Elige una contraseña segura para tu cuenta."
+msgstr "Choose a secure password for your account."
+
+msgid "Cambiar Contraseña"
+msgstr "Change Password"
+
+msgid "Enlace Inválido"
+msgstr "Invalid Link"
+
+msgid ""
+"El enlace para restablecer la contraseña no es válido, posiblemente porque "
+"ya fue utilizado. Solicita uno nuevo."
+msgstr ""
+"The password reset link is invalid, possibly because it has already been "
+"used. Request a new one."
+
+msgid "Solicitar nuevo enlace"
+msgstr "Request new link"
+
+msgid "Contraseña Actualizada"
+msgstr "Password Updated"
+
+msgid "¡Contraseña Actualizada!"
+msgstr "Password Updated!"
+
+msgid ""
+"Tu contraseña se cambió correctamente. Ya puedes iniciar sesión con tus "
+"nuevos datos."
+msgstr ""
+"Your password was changed successfully. You can now sign in with your new "
+"details."
+
+msgid "Crear Proyecto - Paso a Paso"
+msgstr "Create Project - Step by Step"
+
+msgid "Volver al Panel"
+msgstr "Back to Dashboard"
+
+msgid "Asistente de Formulación"
+msgstr "Formulation Wizard"
+
+msgid "Paso"
+msgstr "Step"
+
+msgid "Paso 1: Identificación y Viabilidad"
+msgstr "Step 1: Identification and Feasibility"
+
+msgid "Información General del Proyecto"
+msgstr "General Project Information"
+
+msgid "Nombre del Proyecto"
+msgstr "Project Name"
+
+msgid "Categoría"
+msgstr "Category"
+
+msgid "Fecha de Inicio"
+msgstr "Start Date"
+
+msgid "Descripción Detallada"
+msgstr "Detailed Description"
+
+msgid "Viabilidad Estratégica"
+msgstr "Strategic Feasibility"
+
+msgid "Articulación Internacional (ODS)"
+msgstr "International Alignment (SDGs)"
+
+msgid "Tipo de Documento"
+msgstr "Document Type"
+
+msgid "Plan de desarrollo"
+msgstr "Development plan"
+
+msgid "Lineamiento"
+msgstr "Guideline"
+
+msgid "Política"
+msgstr "Policy"
+
+msgid "Otro documento"
+msgstr "Other document"
+
+msgid "Soporte Internacional"
+msgstr "International Support"
+
+msgid "Articulación Nacional (Planes de Desarrollo)"
+msgstr "National Alignment (Development Plans)"
+
+msgid "Articulación Regional (Planes Departamentales)"
+msgstr "Regional Alignment (Departmental Plans)"
+
+msgid "Articulación Municipal"
+msgstr "Municipal Alignment"
+
+msgid "Articulación Institucional o Social"
+msgstr "Institutional or Social Alignment"
+
+msgid "Paso 2: Viabilidad Legal"
+msgstr "Step 2: Legal Feasibility"
+
+msgid "Viabilidad Legal y Normativa"
+msgstr "Legal and Regulatory Feasibility"
+
+msgid "País del Proyecto"
+msgstr "Project Country"
+
+msgid "Normas Disponibles:"
+msgstr "Available Regulations:"
+
+msgid "Paso 3: Cronograma"
+msgstr "Step 3: Timeline"
+
+msgid "Definida en el Paso 1."
+msgstr "Defined in Step 1."
+
+msgid "Fecha de Finalización"
+msgstr "End Date"
+
+msgid "Paso 4: Recursos"
+msgstr "Step 4: Resources"
+
+msgid "Presupuesto Estimado (USD)"
+msgstr "Estimated Budget (USD)"
+
+msgid "Paso 5: Riesgos"
+msgstr "Step 5: Risks"
+
+msgid "Identificación de Riesgos"
+msgstr "Risk Identification"
+
+msgid "Paso 6: Revisión Final"
+msgstr "Step 6: Final Review"
+
+msgid "Haz clic en \"Guardar\" para registrar formalmente el proyecto."
+msgstr "Click \"Save\" to formally register the project."
+
+msgid "Anterior"
+msgstr "Previous"
+
+msgid "Siguiente"
+msgstr "Next"
+
+msgid "Guardar Proyecto"
+msgstr "Save Project"
+
+msgid "Sin definir aún"
+msgstr "Not set yet"
+
+msgid "No hay normas registradas."
+msgstr "No regulations registered."
+
+msgid "Error cargando leyes:"
+msgstr "Error loading regulations:"
+
+msgid "Por favor, ingresa el nombre del proyecto"
+msgstr "Please enter the project name"
+
+msgid "N/A"
+msgstr "N/A"
+
+msgid "Proyecto"
+msgstr "Project"
+
+msgid "Inicio"
+msgstr "Start"
+
+msgid "Fin"
+msgstr "End"
+
+msgid "Presupuesto"
+msgstr "Budget"
+
+msgid "Nombres"
+msgstr "First Names"
+
+msgid "Apellidos"
+msgstr "Last Names"
+
+msgid "Número de teléfono"
+msgstr "Phone Number"
+
+msgid "Fecha de nacimiento"
+msgstr "Date of Birth"
+
+msgid "País de residencia"
+msgstr "Country of Residence"
+
+msgid "Ciudad de residencia"
+msgstr "City of Residence"
+
+msgid "Correo electrónico"
+msgstr "Email Address"
+
+msgid "Confirmar correo electrónico"
+msgstr "Confirm Email Address"
+
+msgid "Contraseña"
+msgstr "Password"
+
+msgid "Confirmar contraseña"
+msgstr "Confirm Password"
+
+msgid "Los correos electrónicos no coinciden."
+msgstr "Email addresses do not match."
+
+msgid "Las contraseñas no coinciden."
+msgstr "Passwords do not match."
+
+msgid "Descripción detallada"
+msgstr "Detailed description"
+
+msgid "--- Seleccione una categoría ---"
+msgstr "--- Select a category ---"
+
+msgid "Público"
+msgstr "Public"
+
+msgid "Privado"
+msgstr "Private"
+
+msgid "--- Seleccione un País ---"
+msgstr "--- Select a Country ---"
+
+msgid "Colombia"
+msgstr "Colombia"
+
+msgid "El Salvador"
+msgstr "El Salvador"
+
+msgid "Honduras"
+msgstr "Honduras"
+
+msgid "Menciona posibles obstáculos críticos"
+msgstr "Mention possible critical obstacles"
+
+msgid "Internacional"
+msgstr "International"
+
+msgid "Nacional"
+msgstr "National"
+
+msgid "Regional"
+msgstr "Regional"
+
+msgid "Municipal"
+msgstr "Municipal"
+
+msgid "Institucional"
+msgstr "Institutional"
+
+msgid "¡Cuenta creada con éxito!"
+msgstr "Account created successfully!"
+
+msgid "Proyecto \"%(nombre)s\" creado con éxito."
+msgstr "Project \"%(nombre)s\" created successfully."
+
+msgid "1. Fin de la pobreza"
+msgstr "1. No poverty"
+
+msgid "2. Hambre cero"
+msgstr "2. Zero hunger"
+
+msgid "3. Salud y bienestar"
+msgstr "3. Good health and well-being"
+
+msgid "4. Educación de calidad"
+msgstr "4. Quality education"
+
+msgid "5. Igualdad de género"
+msgstr "5. Gender equality"
+
+msgid "6. Agua limpia y saneamiento"
+msgstr "6. Clean water and sanitation"
+
+msgid "7. Energía asequible"
+msgstr "7. Affordable energy"
+
+msgid "8. Trabajo decente y crecimiento"
+msgstr "8. Decent work and growth"
+
+msgid "9. Industria, innovación e infra."
+msgstr "9. Industry, innovation and infrastructure"
+
+msgid "10. Reducción de desigualdades"
+msgstr "10. Reduced inequalities"
+
+msgid "11. Ciudades sostenibles"
+msgstr "11. Sustainable cities"
+
+msgid "12. Producción y consumo resp."
+msgstr "12. Responsible production and consumption"
+
+msgid "13. Acción por el clima"
+msgstr "13. Climate action"
+
+msgid "14. Vida submarina"
+msgstr "14. Life below water"
+
+msgid "15. Vida de ecosistemas terrestres"
+msgstr "15. Life on land"
+
+msgid "16. Paz, justicia e inst. sólidas"
+msgstr "16. Peace, justice and strong institutions"
+
+msgid "17. Alianzas para lograr objetivos"
+msgstr "17. Partnerships for the goals"

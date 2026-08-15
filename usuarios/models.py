@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.translation import gettext_lazy as _
 
 class Perfil(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
@@ -54,17 +55,17 @@ class Proyecto(models.Model):
 
 class DocumentoSoporte(models.Model):
     TIPO_CHOICES = [
-        ('PLAN', 'Plan de desarrollo'),
-        ('LINEAMIENTO', 'Lineamiento'),
-        ('POLITICA', 'Política'),
-        ('OTRO', 'Otro documento'),
+        ('PLAN', _('Plan de desarrollo')),
+        ('LINEAMIENTO', _('Lineamiento')),
+        ('POLITICA', _('Política')),
+        ('OTRO', _('Otro documento')),
     ]
     SECCION_CHOICES = [
-        ('INT', 'Internacional'),
-        ('NAC', 'Nacional'),
-        ('REG', 'Regional'),
-        ('MUN', 'Municipal'),
-        ('INS', 'Institucional'),
+        ('INT', _('Internacional')),
+        ('NAC', _('Nacional')),
+        ('REG', _('Regional')),
+        ('MUN', _('Municipal')),
+        ('INS', _('Institucional')),
     ]
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='documentos')
     archivo = models.FileField(upload_to='soportes_estrategicos/')

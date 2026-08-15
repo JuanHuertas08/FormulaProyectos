@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: formulaproyectos
+    runtime: python
+    plan: free
+    buildCommand: "./buid.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: formulaproyectos-db
+          property: connectionString
+
+databases:
+  - name: formulaproyectos-db
+    plan: free

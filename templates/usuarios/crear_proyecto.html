@@ -1,15 +1,16 @@
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="es">
+<html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Proyecto - Paso a Paso</title>
+    <title>{% trans "Crear Proyecto - Paso a Paso" %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .wizard-step { display: none; }
         .wizard-step.active { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
+
         /* Estilo para los indicadores de progreso */
         .step-line { flex: 1; height: 2px; background-color: #e5e7eb; align-self: center; margin: 0 10px; }
         .step-indicator.active { background: linear-gradient(135deg, #7c2d12, #c2410c); color: white; border-color: #c2410c; }
@@ -22,21 +23,27 @@
         <div class="container mx-auto flex items-center">
             <a href="{% url 'home' %}" class="text-white/90 hover:text-white flex items-center transition">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Volver al Panel
+                {% trans "Volver al Panel" %}
             </a>
-            <h1 class="mx-auto text-xl font-bold">Asistente de Formulación</h1>
+            <h1 class="mx-auto text-xl font-bold">{% trans "Asistente de Formulación" %}</h1>
+            <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 bg-white/15 rounded-full p-1">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.path }}">
+                <button type="submit" name="language" value="es" class="px-2.5 py-1 rounded-full text-xs font-bold transition {% if LANGUAGE_CODE == 'es' %}bg-white text-[#7c2d12]{% else %}text-white hover:bg-white/20{% endif %}">ES</button>
+                <button type="submit" name="language" value="en" class="px-2.5 py-1 rounded-full text-xs font-bold transition {% if LANGUAGE_CODE == 'en' %}bg-white text-[#7c2d12]{% else %}text-white hover:bg-white/20{% endif %}">EN</button>
+            </form>
         </div>
     </nav>
 
     <main class="container mx-auto max-w-4xl p-4">
-        
+
         <div class="flex justify-between items-center mb-12 px-4">
             {% for i in "123456" %}
             <div class="flex flex-col items-center">
                 <div id="ind-{{i}}" class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold text-gray-400 transition-all duration-300">
                     {{i}}
                 </div>
-                <span class="text-[10px] mt-1 text-gray-400 font-medium">Paso {{i}}</span>
+                <span class="text-[10px] mt-1 text-gray-400 font-medium">{% trans "Paso" %} {{i}}</span>
             </div>
             {% if not forloop.last %}<div class="step-line"></div>{% endif %}
             {% endfor %}
@@ -46,36 +53,36 @@
             <form id="wizardForm" method="POST">
                 {% csrf_token %}
 
-                
+
                <div class="wizard-step active" id="step-1">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Paso 1: Identificación y Viabilidad</h2>
-    
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 1: Identificación y Viabilidad" %}</h2>
+
     <div class="space-y-8">
     <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 shadow-sm">
     <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
         <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">A</span>
-        Información General del Proyecto
+        {% trans "Información General del Proyecto" %}
     </h3>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="md:col-span-2">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Nombre del Proyecto</label>
+            <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Nombre del Proyecto" %}</label>
             {{ form.nombre }}
             {% if form.nombre.errors %}<p class="text-red-500 text-xs">{{ form.nombre.errors.0 }}</p>{% endif %}
         </div>
 
         <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Categoría</label>
+            <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Categoría" %}</label>
             {{ form.categoria }}
         </div>
 
         <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Fecha de Inicio</label>
+            <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Fecha de Inicio" %}</label>
             {{ form.fecha_inicio }}
         </div>
 
         <div class="md:col-span-2">
-            <label class="block text-sm font-bold text-gray-700 mb-1">Descripción Detallada</label>
+            <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Descripción Detallada" %}</label>
             {{ form.descripcion }}
         </div>
     </div>
@@ -84,42 +91,42 @@
     <div class="bg-orange-50/50 p-6 rounded-xl border border-orange-100 shadow-sm">
         <h3 class="text-lg font-semibold text-orange-800 mb-4 flex items-center">
             <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">B</span>
-            Viabilidad Estratégica
+            {% trans "Viabilidad Estratégica" %}
         </h3>
 
         <div class="space-y-6">
             <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Articulación Internacional (ODS)</label>
+                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Internacional (ODS)" %}</label>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 max-h-40 overflow-y-auto p-2 border rounded bg-gray-50 mb-3">
                     {{ form.objetivos_desarrollo }}
                 </div>
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3">
                     <div class="flex-1">
-                        <label class="block text-[10px] uppercase font-bold text-gray-500">Tipo de Documento</label>
+                        <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Tipo de Documento" %}</label>
                         <select name="tipo_archivo_int" class="w-full text-sm p-2 border rounded bg-gray-50">
-                            <option value="PLAN">Plan de desarrollo</option>
-                            <option value="LINEAMIENTO">Lineamiento</option>
-                            <option value="POLITICA">Política</option>
-                            <option value="OTRO">Otro documento</option>
+                            <option value="PLAN">{% trans "Plan de desarrollo" %}</option>
+                            <option value="LINEAMIENTO">{% trans "Lineamiento" %}</option>
+                            <option value="POLITICA">{% trans "Política" %}</option>
+                            <option value="OTRO">{% trans "Otro documento" %}</option>
                         </select>
                     </div>
                     <div class="flex-1">
-                        <label class="block text-[10px] uppercase font-bold text-gray-500">Soporte Internacional</label>
+                        <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Soporte Internacional" %}</label>
                         <input type="file" name="archivo_int" class="w-full text-sm">
                     </div>
                 </div>
             </div>
 
             <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Articulación Nacional (Planes de Desarrollo)</label>
+                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Nacional (Planes de Desarrollo)" %}</label>
                 {{ form.articulacion_nacional }}
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3 mt-3">
                     <div class="flex-1">
                         <select name="tipo_archivo_nac" class="w-full text-sm p-2 border rounded bg-gray-50">
-                            <option value="PLAN">Plan de desarrollo</option>
-                            <option value="LINEAMIENTO">Lineamiento</option>
-                            <option value="POLITICA">Política</option>
-                            <option value="OTRO">Otro documento</option>
+                            <option value="PLAN">{% trans "Plan de desarrollo" %}</option>
+                            <option value="LINEAMIENTO">{% trans "Lineamiento" %}</option>
+                            <option value="POLITICA">{% trans "Política" %}</option>
+                            <option value="OTRO">{% trans "Otro documento" %}</option>
                         </select>
                     </div>
                     <div class="flex-1">
@@ -129,15 +136,15 @@
             </div>
 
             <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Articulación Regional (Planes Departamentales)</label>
+                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Regional (Planes Departamentales)" %}</label>
                 {{ form.articulacion_regional }}
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3 mt-3">
                     <div class="flex-1">
                         <select name="tipo_archivo_reg" class="w-full text-sm p-2 border rounded bg-gray-50">
-                            <option value="PLAN">Plan de desarrollo</option>
-                            <option value="LINEAMIENTO">Lineamiento</option>
-                            <option value="POLITICA">Política</option>
-                            <option value="OTRO">Otro documento</option>
+                            <option value="PLAN">{% trans "Plan de desarrollo" %}</option>
+                            <option value="LINEAMIENTO">{% trans "Lineamiento" %}</option>
+                            <option value="POLITICA">{% trans "Política" %}</option>
+                            <option value="OTRO">{% trans "Otro documento" %}</option>
                         </select>
                     </div>
                     <div class="flex-1">
@@ -147,15 +154,15 @@
             </div>
 
             <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Articulación Municipal</label>
+                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Municipal" %}</label>
                 {{ form.articulacion_municipal }}
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3 mt-3">
                     <div class="flex-1">
                         <select name="tipo_archivo_mun" class="w-full text-sm p-2 border rounded bg-gray-50">
-                            <option value="PLAN">Plan de desarrollo</option>
-                            <option value="LINEAMIENTO">Lineamiento</option>
-                            <option value="POLITICA">Política</option>
-                            <option value="OTRO">Otro documento</option>
+                            <option value="PLAN">{% trans "Plan de desarrollo" %}</option>
+                            <option value="LINEAMIENTO">{% trans "Lineamiento" %}</option>
+                            <option value="POLITICA">{% trans "Política" %}</option>
+                            <option value="OTRO">{% trans "Otro documento" %}</option>
                         </select>
                     </div>
                     <div class="flex-1">
@@ -165,15 +172,15 @@
             </div>
 
             <div class="bg-white p-4 rounded-lg border border-gray-200">
-                <label class="block text-sm font-bold text-gray-800 mb-2">Articulación Institucional o Social</label>
+                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Institucional o Social" %}</label>
                 {{ form.articulacion_institucional }}
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3 mt-3">
                     <div class="flex-1">
                         <select name="tipo_archivo_ins" class="w-full text-sm p-2 border rounded bg-gray-50">
-                            <option value="PLAN">Plan de desarrollo</option>
-                            <option value="LINEAMIENTO">Lineamiento</option>
-                            <option value="POLITICA">Política</option>
-                            <option value="OTRO">Otro documento</option>
+                            <option value="PLAN">{% trans "Plan de desarrollo" %}</option>
+                            <option value="LINEAMIENTO">{% trans "Lineamiento" %}</option>
+                            <option value="POLITICA">{% trans "Política" %}</option>
+                            <option value="OTRO">{% trans "Otro documento" %}</option>
                         </select>
                     </div>
                     <div class="flex-1">
@@ -185,23 +192,22 @@
     </div>
 </div>
 
-<div class="wizard-step hidden" id="step-2"> <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Paso 2: Viabilidad Legal</h2>
-    <p class="text-red-500">¿Formulario cargado?: {{ form.pais.label_tag }}</p>
+<div class="wizard-step hidden" id="step-2"> <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 2: Viabilidad Legal" %}</h2>
     <div class="space-y-6">
         <div class="bg-green-50/50 p-6 rounded-xl border border-green-100 shadow-sm">
             <h3 class="text-lg font-semibold text-green-800 mb-4 flex items-center">
                 <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
-                Viabilidad Legal y Normativa
+                {% trans "Viabilidad Legal y Normativa" %}
             </h3>
-            
+
             <div class="grid grid-cols-1 gap-6">
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">País del Proyecto</label>
-                    {{ form.pais }} 
+                    <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "País del Proyecto" %}</label>
+                    {{ form.pais }}
                 </div>
 
                 <div id="seccion-leyes" class="hidden space-y-4 bg-white p-4 rounded-lg border border-gray-200">
-                    <p class="text-xs font-bold text-gray-500 uppercase">Normas Disponibles:</p>
+                    <p class="text-xs font-bold text-gray-500 uppercase">{% trans "Normas Disponibles:" %}</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div id="grupo-politica"></div>
                         <div id="grupo-resolucion"></div>
@@ -211,7 +217,7 @@
                 </div>
 
                 <div id="seccion-descripcion" class="hidden">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">Descripción Detallada</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Descripción Detallada" %}</label>
                     {{ form.descripcion_detallada }}
                 </div>
             </div>
@@ -220,15 +226,15 @@
 </div>
 
                 <div class="wizard-step" id="step-3">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Paso 3: Cronograma</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 3: Cronograma" %}</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de Inicio</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Inicio" %}</label>
                             <p class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" id="resumen-fecha-inicio">—</p>
-                            <p class="text-xs text-gray-400 mt-1">Definida en el Paso 1.</p>
+                            <p class="text-xs text-gray-400 mt-1">{% trans "Definida en el Paso 1." %}</p>
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha de Finalización</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Finalización" %}</label>
                             {{ form.fecha_fin }}
                             {% if form.fecha_fin.errors %}<p class="text-red-500 text-xs">{{ form.fecha_fin.errors.0 }}</p>{% endif %}
                         </div>
@@ -236,35 +242,35 @@
                 </div>
 
                 <div class="wizard-step" id="step-4">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Paso 4: Recursos</h2>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Presupuesto Estimado (USD)</label>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 4: Recursos" %}</h2>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Presupuesto Estimado (USD)" %}</label>
                     {{ form.presupuesto }}
                     {% if form.presupuesto.errors %}<p class="text-red-500 text-xs">{{ form.presupuesto.errors.0 }}</p>{% endif %}
                 </div>
 
                 <div class="wizard-step" id="step-5">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Paso 5: Riesgos</h2>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Identificación de Riesgos</label>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 5: Riesgos" %}</h2>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Identificación de Riesgos" %}</label>
                     {{ form.riesgos }}
                     {% if form.riesgos.errors %}<p class="text-red-500 text-xs">{{ form.riesgos.errors.0 }}</p>{% endif %}
                 </div>
 
                 <div class="wizard-step" id="step-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-green-600">Paso 6: Revisión Final</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-green-600">{% trans "Paso 6: Revisión Final" %}</h2>
                     <div id="resumen-final" class="bg-gray-50 p-6 rounded-xl space-y-2 text-gray-700 border-dashed border-2">
-                        <p>Haz clic en "Guardar" para registrar formalmente el proyecto.</p>
+                        <p>{% trans 'Haz clic en "Guardar" para registrar formalmente el proyecto.' %}</p>
                     </div>
                 </div>
 
                 <div class="flex justify-between mt-10 pt-6 border-t">
                     <button type="button" id="prevBtn" onclick="nextPrev(-1)" class="px-6 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 transition font-bold">
-                        Anterior
+                        {% trans "Anterior" %}
                     </button>
                     <button type="button" id="nextBtn" onclick="nextPrev(1)" class="px-8 py-2 bg-gradient-to-r from-[#7c2d12] to-[#c2410c] text-white rounded-lg hover:brightness-110 shadow-md transition font-bold ml-auto">
-                        Siguiente
+                        {% trans "Siguiente" %}
                     </button>
                     <button type="submit" id="submitBtn" style="display:none;" class="px-8 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white rounded-lg hover:brightness-110 shadow-lg transition font-bold ml-auto">
-                        Guardar Proyecto
+                        {% trans "Guardar Proyecto" %}
                     </button>
                 </div>
             </form>
@@ -272,6 +278,21 @@
     </main>
 
 <script>
+    const I18N = {
+        sinDefinir: "{% trans 'Sin definir aún' %}",
+        noHayNormas: "{% trans 'No hay normas registradas.' %}",
+        errorCargandoLeyes: "{% trans 'Error cargando leyes:' %}",
+        ingresaNombre: "{% trans 'Por favor, ingresa el nombre del proyecto' %}",
+        na: "{% trans 'N/A' %}",
+        noDefinida: "{% trans 'No definida' %}",
+        proyecto: "{% trans 'Proyecto' %}",
+        categoriaLbl: "{% trans 'Categoría' %}",
+        paisLbl: "{% trans 'País' %}",
+        inicioLbl: "{% trans 'Inicio' %}",
+        finLbl: "{% trans 'Fin' %}",
+        presupuestoLbl: "{% trans 'Presupuesto' %}"
+    };
+
     let currentStep = 1;
     const totalSteps = 6;
 
@@ -280,7 +301,7 @@
     const resumenFechaInicio = document.getElementById('resumen-fecha-inicio');
     function sincronizarFechaInicio() {
         if (fechaInicioInput && resumenFechaInicio) {
-            resumenFechaInicio.textContent = fechaInicioInput.value || 'Sin definir aún';
+            resumenFechaInicio.textContent = fechaInicioInput.value || I18N.sinDefinir;
         }
     }
     if (fechaInicioInput) {
@@ -309,7 +330,7 @@
                     const llenarGrupo = (id, lista) => {
                         const container = document.getElementById(id);
                         if (!container) return;
-                        container.innerHTML = ''; 
+                        container.innerHTML = '';
                         if (lista && lista.length > 0) {
                             lista.forEach(ley => {
                                 container.innerHTML += `
@@ -319,7 +340,7 @@
                                     </label>`;
                             });
                         } else {
-                            container.innerHTML = '<p class="text-xs text-gray-400 italic">No hay normas registradas.</p>';
+                            container.innerHTML = `<p class="text-xs text-gray-400 italic">${I18N.noHayNormas}</p>`;
                         }
                     };
 
@@ -332,7 +353,7 @@
                     if(leyesDiv) leyesDiv.classList.remove('hidden');
                     if(descDiv) descDiv.classList.remove('hidden');
                 })
-                .catch(error => console.error('Error cargando leyes:', error));
+                .catch(error => console.error(I18N.errorCargandoLeyes, error));
         });
     }
 
@@ -340,7 +361,7 @@
     function showStep(n) {
         let steps = document.getElementsByClassName("wizard-step");
         let indicators = document.getElementsByClassName("step-indicator");
-        
+
         // Ocultar todos los pasos y limpiar indicadores
         for (let i = 0; i < steps.length; i++) {
             steps[i].style.display = "none"; // Usamos display para asegurar visibilidad
@@ -350,13 +371,13 @@
                 if (i < n - 1) indicators[i].classList.add("completed");
             }
         }
-        
+
         // Mostrar paso actual
         if (steps[n - 1]) {
             steps[n - 1].style.display = "block";
             steps[n - 1].classList.add("active");
         }
-        
+
         if (indicators[n - 1]) {
             indicators[n - 1].classList.add("active");
         }
@@ -367,7 +388,7 @@
         const submitBtn = document.getElementById("submitBtn");
 
         if(prevBtn) prevBtn.style.display = (n === 1) ? "none" : "inline";
-        
+
         if (n === totalSteps) {
             if(nextBtn) nextBtn.style.display = "none";
             if(submitBtn) submitBtn.style.display = "inline";
@@ -389,7 +410,7 @@
         if (currentStep === 1) {
             let nombreInput = document.getElementsByName("nombre")[0];
             if (nombreInput && nombreInput.value.trim() === "") {
-                alert("Por favor, ingresa el nombre del proyecto");
+                alert(I18N.ingresaNombre);
                 return false;
             }
         }
@@ -402,12 +423,12 @@
         if (!form || !resumenContainer) return;
 
         let resumen = `
-            <p><strong>Proyecto:</strong> ${form.nombre ? form.nombre.value : 'N/A'}</p>
-            <p><strong>Categoría:</strong> ${form.categoria ? form.categoria.value : 'N/A'}</p>
-            <p><strong>País:</strong> ${form.pais ? form.pais.value : 'N/A'}</p>
-            <p><strong>Inicio:</strong> ${form.fecha_inicio ? (form.fecha_inicio.value || 'No definida') : 'N/A'}</p>
-            <p><strong>Fin:</strong> ${form.fecha_fin ? (form.fecha_fin.value || 'No definida') : 'N/A'}</p>
-            <p><strong>Presupuesto:</strong> ${form.presupuesto && form.presupuesto.value ? '$' + form.presupuesto.value : 'No definido'}</p>
+            <p><strong>${I18N.proyecto}:</strong> ${form.nombre ? form.nombre.value : I18N.na}</p>
+            <p><strong>${I18N.categoriaLbl}:</strong> ${form.categoria ? form.categoria.value : I18N.na}</p>
+            <p><strong>${I18N.paisLbl}:</strong> ${form.pais ? form.pais.value : I18N.na}</p>
+            <p><strong>${I18N.inicioLbl}:</strong> ${form.fecha_inicio ? (form.fecha_inicio.value || I18N.noDefinida) : I18N.na}</p>
+            <p><strong>${I18N.finLbl}:</strong> ${form.fecha_fin ? (form.fecha_fin.value || I18N.noDefinida) : I18N.na}</p>
+            <p><strong>${I18N.presupuestoLbl}:</strong> ${form.presupuesto && form.presupuesto.value ? '$' + form.presupuesto.value : I18N.noDefinida}</p>
         `;
         resumenContainer.innerHTML = resumen;
     }
@@ -418,16 +439,16 @@
     function showStep(n) {
     let steps = document.getElementsByClassName("wizard-step");
     let indicators = document.getElementsByClassName("step-indicator");
-    
+
     // 1. Ocultar TODO primero
     for (let i = 0; i < steps.length; i++) {
         steps[i].style.setProperty("display", "none", "important");
         steps[i].classList.remove("active");
         if (indicators[i]) indicators[i].classList.remove("active", "completed");
     }
-    
+
     // 2. Mostrar el paso actual por ID o por índice
-    let currentStepEl = document.getElementById(`step-${n}`); 
+    let currentStepEl = document.getElementById(`step-${n}`);
     if (currentStepEl) {
         currentStepEl.style.setProperty("display", "block", "important");
         currentStepEl.classList.add("active");
@@ -435,7 +456,7 @@
         // Si no encuentra el ID, intenta por índice
         steps[n-1].style.setProperty("display", "block", "important");
     }
-    
+
     // 3. Actualizar indicadores
     if (indicators[n - 1]) {
         indicators[n - 1].classList.add("active");

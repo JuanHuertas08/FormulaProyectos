@@ -4,6 +4,7 @@ from .models import Perfil, DocumentoSoporte
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
 
 # Relaciona cada campo de archivo del Paso 1 con su sección de DocumentoSoporte
 SECCIONES_SOPORTE = {
@@ -64,7 +65,7 @@ def registrar_usuario(request):
             perfil.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
             perfil.save()
 
-            messages.success(request, "¡Cuenta creada con éxito!")
+            messages.success(request, _("¡Cuenta creada con éxito!"))
             return redirect('login')
     else:
         form = RegistroForm()
@@ -97,7 +98,7 @@ def crear_proyecto(request):
                         seccion=seccion,
                     )
 
-            messages.success(request, f'Proyecto "{proyecto.nombre}" creado con éxito.')
+            messages.success(request, _('Proyecto "%(nombre)s" creado con éxito.') % {'nombre': proyecto.nombre})
             return redirect('home')
     else:
         form = Paso1ProjectForm()
