@@ -5,8 +5,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path, include
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    path('', RedirectView.as_view(pattern_name='home', permanent=False)),
     path('admin/', admin.site.urls),
     # Esto une el prefijo 'usuarios/' con lo que haya en usuarios.urls
     path('usuarios/', include('usuarios.urls')),
