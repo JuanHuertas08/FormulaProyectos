@@ -1,8 +1,18 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
+
+
+def validar_descripcion_minima(valor):
+    """La descripción debe tener contenido real: al menos 50 caracteres sin contar
+    espacios en blanco al inicio/fin (evita 'satisfacer' el mínimo solo con relleno)."""
+    if len(valor.strip()) < 50:
+        raise ValidationError(
+            _('La descripción debe tener al menos 50 caracteres.')
+        )
 
 class Perfil(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
@@ -31,7 +41,7 @@ def guardar_perfil_usuario(sender, instance, **kwargs):
 class Proyecto(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proyectos', null=True, blank=True)
     nombre = models.CharField(max_length=255)
-    descripcion = models.TextField()
+    descripcion = models.TextField(validators=[validar_descripcion_minima])
     fecha_inicio = models.DateField()
     categoria = models.CharField(max_length=100)
     pais = models.CharField(max_length=10, blank=True)
@@ -52,6 +62,25 @@ class Proyecto(models.Model):
     # Paso 5: Riesgos
     riesgos = models.TextField(blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    # Paso 2: Diagnóstico del contexto (autocompletado por IA + editable por el usuario)
+    diagnostico_cifras = models.TextField(
+        blank=True,
+        verbose_name=_('Cifras y datos estadísticos'),
+    )
+    diagnostico_antecedentes = models.TextField(
+        blank=True,
+        verbose_name=_('Antecedentes (últimos 5 años)'),
+    )
+    diagnostico_necesidades = models.TextField(
+        blank=True,
+        verbose_name=_('Necesidades y desafíos'),
+    )
+    diagnostico_fuentes = models.TextField(
+        blank=True,
+        verbose_name=_('Fuentes consultadas'),
+        help_text=_('URLs de las fuentes oficiales usadas para generar el diagnóstico.'),
+    )
 
 class DocumentoSoporte(models.Model):
     TIPO_CHOICES = [

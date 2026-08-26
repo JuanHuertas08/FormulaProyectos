@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from .forms import RegistroForm, Paso1ProjectForm
 from .models import Perfil, DocumentoSoporte
+from .diagnostico import generar_diagnostico, DiagnosticoError, FUENTES_POR_PAIS
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
 
 # Relaciona cada campo de archivo del Paso 1 con su sección de DocumentoSoporte
 SECCIONES_SOPORTE = {
@@ -40,6 +42,32 @@ def obtener_leyes_por_pais(request):
     
     data = leyes_data.get(pais_codigo, {})
     return JsonResponse(data)
+
+
+@login_required
+@require_POST
+def buscar_diagnostico(request):
+    """Genera (vía IA + búsqueda web restringida a fuentes oficiales de
+    planeación) el diagnóstico de contexto del Paso 2, a partir de los datos
+    del proyecto capturados en el Paso 1."""
+    pais = request.POST.get('pais', '')
+    categoria = request.POST.get('categoria', '')
+    nombre = request.POST.get('nombre', '')
+    descripcion = request.POST.get('descripcion', '')
+
+    if pais not in FUENTES_POR_PAIS:
+        return JsonResponse({'error': _('Selecciona primero el país del proyecto.')}, status=400)
+    if not nombre or not descripcion:
+        return JsonResponse({'error': _('Completa el nombre y la descripción del proyecto en el Paso 1.')}, status=400)
+
+    try:
+        resultado = generar_diagnostico(
+            pais=pais, categoria=categoria, nombre=nombre, descripcion=descripcion,
+        )
+    except DiagnosticoError as exc:
+        return JsonResponse({'error': str(exc)}, status=503)
+
+    return JsonResponse(resultado)
 
 def home(request):
     """Página de inicio del sistema."""

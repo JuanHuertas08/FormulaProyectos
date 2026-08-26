@@ -153,6 +153,11 @@ MEDIA_ROOT = BASE_DIR / "media"
 # (evita depender de un servidor SMTP real mientras no haya costos de nube).
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
+# Búsqueda con IA (Paso 2 del wizard: diagnóstico de contexto). Sin esta clave
+# configurada, el botón de búsqueda muestra un mensaje de "no configurado" en
+# vez de fallar de forma silenciosa o inesperada.
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+
 # Seguridad en producción (Render sirve la app detrás de un proxy HTTPS)
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

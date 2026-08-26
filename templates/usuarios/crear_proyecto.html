@@ -84,7 +84,29 @@
         <div class="md:col-span-2">
             <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Descripción Detallada" %}</label>
             {{ form.descripcion }}
+            <p class="text-xs mt-1"><span id="contador-descripcion">0</span>/50 {% trans "caracteres mínimo" %}</p>
+            {% if form.descripcion.errors %}<p class="text-red-500 text-xs">{{ form.descripcion.errors.0 }}</p>{% endif %}
         </div>
+
+        <div class="md:col-span-2">
+            <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "País donde se ejecutará el Proyecto" %}</label>
+            {{ form.pais }}
+        </div>
+    </div>
+
+    <div id="seccion-leyes" class="hidden space-y-4 bg-white p-4 mt-6 rounded-lg border border-gray-200">
+        <p class="text-xs font-bold text-gray-500 uppercase">{% trans "Normas Disponibles:" %}</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="grupo-politica"></div>
+            <div id="grupo-resolucion"></div>
+            <div id="grupo-decretos"></div>
+            <div id="grupo-otras"></div>
+        </div>
+    </div>
+
+    <div id="seccion-descripcion" class="hidden mt-6">
+        <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Notas Adicionales sobre el Marco Legal" %}</label>
+        {{ form.descripcion_detallada }}
     </div>
 </div>
 
@@ -192,36 +214,50 @@
     </div>
 </div>
 
-<div class="wizard-step hidden" id="step-2"> <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 2: Viabilidad Legal" %}</h2>
+<div class="wizard-step hidden" id="step-2"> <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 2: Diagnóstico del Contexto" %}</h2>
     <div class="space-y-6">
-        <div class="bg-green-50/50 p-6 rounded-xl border border-green-100 shadow-sm">
-            <h3 class="text-lg font-semibold text-green-800 mb-4 flex items-center">
-                <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
-                {% trans "Viabilidad Legal y Normativa" %}
-            </h3>
 
-            <div class="grid grid-cols-1 gap-6">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "País del Proyecto" %}</label>
-                    {{ form.pais }}
-                </div>
-
-                <div id="seccion-leyes" class="hidden space-y-4 bg-white p-4 rounded-lg border border-gray-200">
-                    <p class="text-xs font-bold text-gray-500 uppercase">{% trans "Normas Disponibles:" %}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div id="grupo-politica"></div>
-                        <div id="grupo-resolucion"></div>
-                        <div id="grupo-decretos"></div>
-                        <div id="grupo-otras"></div>
-                    </div>
-                </div>
-
-                <div id="seccion-descripcion" class="hidden">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">{% trans "Descripción Detallada" %}</label>
-                    {{ form.descripcion_detallada }}
-                </div>
-            </div>
+        <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <p class="text-sm text-indigo-900">
+                {% trans "Busca automáticamente información oficial del organismo de planeación del país del proyecto y luego edita o amplía el texto en cada sección." %}
+            </p>
+            <button type="button" id="btnDiagnostico" onclick="buscarDiagnostico()"
+                class="px-5 py-2 bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-lg hover:brightness-110 shadow-md transition font-bold whitespace-nowrap">
+                {% trans "Buscar información oficial" %}
+            </button>
         </div>
+        <p id="diagnostico-estado" class="text-xs text-gray-500"></p>
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                {% trans "Cifras y datos estadísticos" %}
+            </h3>
+            {{ form.diagnostico_cifras }}
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                {% trans "Antecedentes (últimos 5 años)" %}
+            </h3>
+            <p class="text-xs text-gray-400 mb-2">{% trans "Sociales, políticos, culturales, legales, ambientales y económicos." %}</p>
+            {{ form.diagnostico_antecedentes }}
+        </div>
+
+        <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">3</span>
+                {% trans "Necesidades y desafíos" %}
+            </h3>
+            {{ form.diagnostico_necesidades }}
+        </div>
+
+        <div id="diagnostico-fuentes-wrap" class="bg-gray-50 p-4 rounded-lg border border-gray-200 hidden">
+            <p class="text-xs font-bold text-gray-500 uppercase mb-2">{% trans "Fuentes consultadas" %}</p>
+            <ul id="diagnostico-fuentes-lista" class="text-xs space-y-1"></ul>
+        </div>
+        {{ form.diagnostico_fuentes }}
     </div>
 </div>
 
@@ -290,7 +326,12 @@
         paisLbl: "{% trans 'País' %}",
         inicioLbl: "{% trans 'Inicio' %}",
         finLbl: "{% trans 'Fin' %}",
-        presupuestoLbl: "{% trans 'Presupuesto' %}"
+        presupuestoLbl: "{% trans 'Presupuesto' %}",
+        descripcionMinima: "{% trans 'La descripción debe tener al menos 50 caracteres.' %}",
+        diagSeleccionaPais: "{% trans 'Selecciona primero el país del proyecto.' %}",
+        diagBuscando: "{% trans 'Buscando en fuentes oficiales...' %}",
+        diagListo: "{% trans 'Información cargada. Puedes editarla o ampliarla.' %}",
+        diagError: "{% trans 'No se pudo completar la búsqueda.' %}"
     };
 
     let currentStep = 1;
@@ -307,6 +348,21 @@
     if (fechaInicioInput) {
         fechaInicioInput.addEventListener('change', sincronizarFechaInicio);
         sincronizarFechaInicio();
+    }
+
+    // --- 0.b CONTADOR DE CARACTERES DE LA DESCRIPCIÓN (mínimo 50) ---
+    const descripcionInput = document.querySelector('[name="descripcion"]');
+    const contadorDescripcion = document.getElementById('contador-descripcion');
+    function sincronizarContadorDescripcion() {
+        if (!descripcionInput || !contadorDescripcion) return;
+        const len = descripcionInput.value.trim().length;
+        contadorDescripcion.textContent = len;
+        contadorDescripcion.parentElement.classList.toggle('text-red-500', len < 50);
+        contadorDescripcion.parentElement.classList.toggle('text-green-600', len >= 50);
+    }
+    if (descripcionInput) {
+        descripcionInput.addEventListener('input', sincronizarContadorDescripcion);
+        sincronizarContadorDescripcion();
     }
 
     // --- 1. LÓGICA DINÁMICA DE PAÍS Y LEYES (UNIFICADA) ---
@@ -413,8 +469,83 @@
                 alert(I18N.ingresaNombre);
                 return false;
             }
+            if (descripcionInput && descripcionInput.value.trim().length < 50) {
+                alert(I18N.descripcionMinima);
+                return false;
+            }
         }
         return true;
+    }
+
+    // --- 3.b BÚSQUEDA DE DIAGNÓSTICO DEL PASO 2 (IA + fuentes oficiales) ---
+    function agregarContenido(id, textoNuevo) {
+        if (!textoNuevo) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = el.value.trim() ? `${el.value.trim()}\n\n---\n\n${textoNuevo}` : textoNuevo;
+    }
+
+    function buscarDiagnostico() {
+        const btn = document.getElementById('btnDiagnostico');
+        const estado = document.getElementById('diagnostico-estado');
+        const paisEl = document.querySelector('[name="pais"]');
+        const categoriaEl = document.querySelector('[name="categoria"]');
+        const nombreEl = document.querySelector('[name="nombre"]');
+        const csrfEl = document.querySelector('[name="csrfmiddlewaretoken"]');
+
+        if (!paisEl || !paisEl.value) {
+            estado.textContent = I18N.diagSeleccionaPais;
+            return;
+        }
+
+        const datos = new URLSearchParams();
+        datos.append('pais', paisEl.value);
+        datos.append('categoria', categoriaEl ? categoriaEl.value : '');
+        datos.append('nombre', nombreEl ? nombreEl.value : '');
+        datos.append('descripcion', descripcionInput ? descripcionInput.value : '');
+        datos.append('csrfmiddlewaretoken', csrfEl ? csrfEl.value : '');
+
+        btn.disabled = true;
+        estado.textContent = I18N.diagBuscando;
+
+        fetch("{% url 'buscar_diagnostico' %}", { method: 'POST', body: datos })
+            .then(async (resp) => {
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || I18N.diagError);
+                return data;
+            })
+            .then((data) => {
+                agregarContenido('id_diagnostico_cifras', data.cifras);
+                agregarContenido('id_diagnostico_antecedentes', data.antecedentes);
+                agregarContenido('id_diagnostico_necesidades', data.necesidades);
+
+                const fuentesWrap = document.getElementById('diagnostico-fuentes-wrap');
+                const fuentesLista = document.getElementById('diagnostico-fuentes-lista');
+                const fuentesInput = document.getElementById('id_diagnostico_fuentes');
+                if (fuentesLista && data.fuentes && data.fuentes.length) {
+                    fuentesLista.innerHTML = '';
+                    data.fuentes.forEach((u) => {
+                        const li = document.createElement('li');
+                        if (typeof u === 'string' && /^https?:\/\//.test(u)) {
+                            const a = document.createElement('a');
+                            a.href = u;
+                            a.target = '_blank';
+                            a.rel = 'noopener';
+                            a.className = 'text-blue-600 underline break-all';
+                            a.textContent = u;
+                            li.appendChild(a);
+                        } else {
+                            li.textContent = u;
+                        }
+                        fuentesLista.appendChild(li);
+                    });
+                    if (fuentesWrap) fuentesWrap.classList.remove('hidden');
+                    if (fuentesInput) fuentesInput.value = data.fuentes.join('\n');
+                }
+                estado.textContent = I18N.diagListo;
+            })
+            .catch((err) => { estado.textContent = err.message; })
+            .finally(() => { btn.disabled = false; });
     }
 
     function generarResumen() {

@@ -112,6 +112,27 @@ class Paso1ProjectForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 5, 'placeholder': _('Menciona posibles obstáculos críticos')})
     )
 
+    # Paso 2: Diagnóstico del contexto (cargado por IA, editable/ampliable)
+    diagnostico_cifras = forms.CharField(
+        label=_("Cifras y datos estadísticos"),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+    )
+    diagnostico_antecedentes = forms.CharField(
+        label=_("Antecedentes (últimos 5 años)"),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+    )
+    diagnostico_necesidades = forms.CharField(
+        label=_("Necesidades y desafíos"),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+    )
+    diagnostico_fuentes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'hidden'})
+    )
+
     # 3. Configuración del Modelo
     class Meta:
         model = Proyecto
@@ -120,11 +141,13 @@ class Paso1ProjectForm(forms.ModelForm):
             'articulacion_nacional', 'articulacion_regional',
             'articulacion_municipal', 'articulacion_institucional',
             'pais', 'fecha_fin', 'presupuesto', 'riesgos',
+            'diagnostico_cifras', 'diagnostico_antecedentes',
+            'diagnostico_necesidades', 'diagnostico_fuentes',
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'w-full p-3 border rounded-lg', 'placeholder': 'Ej: Proyecto Integración social'}),
             'fecha_inicio': forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg', 'type': 'date'}),
-            'descripcion': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 3}),
+            'descripcion': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 3, 'minlength': 50}),
             'articulacion_nacional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_regional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_municipal': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
