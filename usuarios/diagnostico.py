@@ -1,5 +1,5 @@
-"""Genera el diagnóstico de contexto (Paso 2) buscando en las fuentes oficiales
-del departamento/secretaría de planeación del país del proyecto."""
+"""Genera el diagnóstico de contexto (Paso 2) buscando en fuentes oficiales
+de planeación y estadística del país del proyecto."""
 import json
 import logging
 
@@ -7,11 +7,13 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-# Dominio oficial del organismo de planeación nacional por país soportado.
+# Fuentes oficiales por país soportado: el organismo de planeación, el
+# instituto nacional de estadística, y CEPAL como respaldo regional cuando
+# la fuente nacional no tiene indexado el dato buscado.
 FUENTES_POR_PAIS = {
-    'COL': ['dnp.gov.co'],
-    'SLV': ['presidencia.gob.sv'],
-    'HND': ['spe.gob.hn'],
+    'COL': ['dnp.gov.co', 'dane.gov.co', 'datos.gov.co', 'cepal.org'],
+    'SLV': ['presidencia.gob.sv', 'digestyc.gob.sv', 'cepal.org'],
+    'HND': ['spe.gob.hn', 'ine.gob.hn', 'cepal.org'],
 }
 
 MODEL = 'claude-opus-5'
@@ -38,8 +40,11 @@ def generar_diagnostico(*, pais, categoria, nombre, descripcion):
     client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""Eres un analista de planeación pública. Investiga en las fuentes
-oficiales permitidas (el organismo nacional de planeación del país del proyecto)
-para construir el diagnóstico de contexto de este proyecto:
+oficiales permitidas de {pais} (el organismo nacional de planeación, el
+instituto nacional de estadística, el portal de datos abiertos si existe, y
+CEPAL como respaldo regional) para construir el diagnóstico de contexto de
+este proyecto. Consulta varias de esas fuentes, no te quedes con la primera
+que encuentres, y prioriza cifras oficiales recientes:
 
 - Nombre del proyecto: {nombre}
 - Categoría: {categoria}
@@ -72,7 +77,7 @@ esta forma exacta:
             tools=[{
                 'type': 'web_search_20260209',
                 'name': 'web_search',
-                'max_uses': 6,
+                'max_uses': 10,
                 'allowed_domains': dominios,
             }],
             messages=[{'role': 'user', 'content': prompt}],
