@@ -1,10 +1,11 @@
-{% load i18n %}
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Dashboard - Formulador de Proyectos" %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'usuarios/favicon.svg' %}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-b from-orange-50 to-white min-h-screen font-sans">
@@ -12,7 +13,14 @@
     <nav class="bg-gradient-to-r from-[#3a1408] via-[#7c2d12] to-[#c2410c] p-4 text-white shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold tracking-tight flex items-center gap-2">
-                <span class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-sm font-extrabold">FP</span>
+                <span class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                    <svg viewBox="0 0 120 120" width="22" height="22" role="img" aria-label="InvestProject">
+                        <circle cx="60" cy="60" r="34" fill="none" stroke="#fff" stroke-width="9" opacity="0.9"/>
+                        <polygon points="91,29 63.5,66.5 52.5,53.5" fill="#fdba74"/>
+                        <polygon points="29,91 63.5,66.5 52.5,53.5" fill="#fff"/>
+                        <circle cx="60" cy="60" r="7" fill="#3a1408" stroke="#fff" stroke-width="3"/>
+                    </svg>
+                </span>
                 {% trans "Formulador de Proyectos" %}
             </h1>
             <div class="flex items-center space-x-4">

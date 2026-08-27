@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="ipMarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a1408"/>
+      <stop offset="100%" stop-color="#c2410c"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="26" fill="url(#ipMarkGrad)"/>
+  <circle cx="60" cy="60" r="34" fill="none" stroke="#fff7ed" stroke-width="9" opacity="0.9"/>
+  <rect x="53" y="15" width="14" height="18" rx="4" fill="#fff7ed"/>
+  <polygon points="91,29 63.5,66.5 52.5,53.5" fill="#fdba74"/>
+  <polygon points="29,91 63.5,66.5 52.5,53.5" fill="#fff7ed"/>
+  <circle cx="60" cy="60" r="8" fill="#3a1408" stroke="#fff7ed" stroke-width="3.5"/>
+</svg>

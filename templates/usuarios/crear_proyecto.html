@@ -1,10 +1,11 @@
-{% load i18n %}
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Crear Proyecto - Paso a Paso" %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'usuarios/favicon.svg' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .wizard-step { display: none; }
@@ -25,7 +26,17 @@
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 {% trans "Volver al Panel" %}
             </a>
-            <h1 class="mx-auto text-xl font-bold">{% trans "Asistente de Formulación" %}</h1>
+            <h1 class="mx-auto text-xl font-bold flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                    <svg viewBox="0 0 120 120" width="22" height="22" role="img" aria-label="InvestProject">
+                        <circle cx="60" cy="60" r="34" fill="none" stroke="#fff" stroke-width="9" opacity="0.9"/>
+                        <polygon points="91,29 63.5,66.5 52.5,53.5" fill="#fdba74"/>
+                        <polygon points="29,91 63.5,66.5 52.5,53.5" fill="#fff"/>
+                        <circle cx="60" cy="60" r="7" fill="#3a1408" stroke="#fff" stroke-width="3"/>
+                    </svg>
+                </span>
+                {% trans "Asistente de Formulación" %}
+            </h1>
             <form action="{% url 'set_language' %}" method="post" class="flex items-center gap-1 bg-white/15 rounded-full p-1">
                 {% csrf_token %}
                 <input name="next" type="hidden" value="{{ request.path }}">

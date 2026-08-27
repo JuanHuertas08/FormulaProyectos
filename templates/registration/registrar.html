@@ -1,10 +1,11 @@
-{% load i18n %}
+{% load i18n static %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% trans "Registro" %} | {% trans "Sistema" %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'usuarios/favicon.svg' %}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -188,7 +189,15 @@
     </form>
 
     <div class="register-card">
-        <div class="brand-mark">FP</div>
+        <div class="brand-mark">
+            <svg viewBox="0 0 120 120" width="34" height="34" role="img" aria-label="InvestProject">
+                <circle cx="60" cy="60" r="34" fill="none" stroke="#fff7ed" stroke-width="6.5" opacity="0.85"/>
+                <rect x="56.5" y="19" width="7" height="11" rx="2" fill="#fff7ed"/>
+                <polygon points="90,30 64.95,64.95 55.05,55.05" fill="#fdba74"/>
+                <polygon points="30,90 64.95,64.95 55.05,55.05" fill="#fff7ed"/>
+                <circle cx="60" cy="60" r="6.5" fill="#3a1408" stroke="#fff7ed" stroke-width="2.4"/>
+            </svg>
+        </div>
         <h2>{% trans "Crear Nueva Cuenta" %}</h2>
         <form method="post">
             {% csrf_token %}
