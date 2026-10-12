@@ -141,6 +141,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -166,3 +167,15 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 60 * 60 * 24 * 7
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# Logs de la aplicación a la consola (en Render aparecen en la pestaña Logs),
+# p. ej. el resultado de cada búsqueda del diagnóstico del Paso 2.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'loggers': {
+        'usuarios': {'handlers': ['console'], 'level': 'INFO'},
+    },
+}

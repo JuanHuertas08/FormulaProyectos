@@ -935,3 +935,61 @@ msgstr ""
 "more specific the description (municipality, target population, sector and "
 "problem), the better the results. You can search everything or a single "
 "section, then edit or expand the text."
+
+msgid "Para mejorar los resultados:"
+msgstr "To improve the results:"
+
+msgid ""
+"Precisa en la descripción del Paso 1 el municipio o departamento, la "
+"población objetivo, el sector y el problema."
+msgstr ""
+"In the Step 1 description, specify the municipality or department, the "
+"target population, the sector and the problem."
+
+msgid ""
+"Marca los ODS relacionados y completa al menos una articulación (nacional, "
+"regional o municipal)."
+msgstr ""
+"Select the related SDGs and fill in at least one alignment (national, "
+"regional or municipal)."
+
+msgid ""
+"Usa “Buscar esta sección” para intentar de nuevo solo la sección que quedó "
+"vacía."
+msgstr ""
+"Use “Search this section” to retry only the section that came back empty."
+
+msgid ""
+"Si la información no está publicada en las fuentes oficiales, complétala "
+"manualmente."
+msgstr ""
+"If the information isn't published in the official sources, fill it in "
+"manually."
+
+msgid "Entendido"
+msgstr "Got it"
+
+msgid "No se encontró información en las fuentes oficiales."
+msgstr "No information was found in the official sources."
+
+msgid "No se encontró información"
+msgstr "No information found"
+
+msgid "La búsqueda en las fuentes oficiales no encontró información para: %s."
+msgstr "The search of official sources found no information for: %s."
+
+msgid "Se encontró información solo para algunas secciones."
+msgstr "Information was found for only some sections."
+
+msgid "Búsqueda completada parcialmente"
+msgstr "Search partially completed"
+
+msgid ""
+"Se encontró información para: %(encontradas)s. No se encontró información "
+"para: %(vacias)s."
+msgstr ""
+"Information found for: %(encontradas)s. No information found for: "
+"%(vacias)s."
+
+msgid "No se pudo completar la búsqueda"
+msgstr "The search could not be completed"

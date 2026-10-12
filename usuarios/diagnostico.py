@@ -2,6 +2,7 @@
 del país del proyecto y en organismos multilaterales de la región."""
 import json
 import logging
+import time
 
 from django.conf import settings
 
@@ -45,6 +46,14 @@ FUENTES_POR_PAIS = {
     for codigo, datos in FUENTES_NACIONALES.items()
 }
 
+# Instrucción común para cuando no hay datos: la sección vacía le permite a la
+# pantalla avisar al usuario con un modal en lugar de mostrar un texto de relleno.
+SIN_RESULTADOS = """No inventes datos. Si no encuentras información en las fuentes permitidas
+para una sección, deja esa sección como cadena vacía "" (no escribas frases
+como "no se encontró información"). En "observaciones" explica en una o dos
+frases, para el usuario, qué buscaste y por qué no hubo resultados (o deja ""
+si encontraste información para todo)."""
+
 # Secciones del diagnóstico y qué debe contener cada una
 SECCIONES = {
     'cifras': 'Cifras y datos estadísticos relacionados con la naturaleza de este '
@@ -57,16 +66,31 @@ SECCIONES = {
                    'con la naturaleza de este proyecto.',
 }
 
-MODEL = 'claude-opus-5'
+MODEL = 'claude-opus-5-5'
+# Profundidad de razonamiento; en este modelo el valor por defecto es
+# 'medium', se fija explícito para que no cambie entre versiones.
+EFFORT = 'medium'
+# El pensamiento del modelo consume del mismo límite que la respuesta: con
+# 4096 la respuesta se cortaba antes de escribir el JSON.
+MAX_TOKENS = 16000
+# Si los filtros de seguridad del modelo declinan la solicitud, la API la
+# reintenta en el modelo alternativo recomendado (server-side fallback).
+BETAS = ['server-side-fallback-2026-07-01']
 
-# Tiempo máximo de la llamada a la IA. Debe ser menor que el timeout de
-# gunicorn (gunicorn.conf.py) para devolver un error controlado en vez de un 502.
-TIMEOUT_SEGUNDOS = 180
+# Tiempo máximo total de la búsqueda (todas las continuaciones). Debe ser
+# menor que el timeout de gunicorn (gunicorn.conf.py) para devolver un error
+# controlado en vez de un 502.
+TIMEOUT_SEGUNDOS = 240
+
+# Con herramientas de servidor la API corre un ciclo interno de hasta 10
+# iteraciones; si no termina devuelve stop_reason "pause_turn" y hay que
+# reenviar el turno para que continúe.
+MAX_CONTINUACIONES = 4
 
 # Búsquedas web permitidas: el diagnóstico completo cubre tres temas; una
 # sección sola puede profundizar más en uno.
-MAX_BUSQUEDAS_COMPLETO = 12
-MAX_BUSQUEDAS_SECCION = 8
+MAX_BUSQUEDAS_COMPLETO = 10
+MAX_BUSQUEDAS_SECCION = 6
 MAX_FUENTES_RESPALDO = 10
 
 
@@ -121,12 +145,11 @@ en uno o dos párrafos narrativos (no viñetas):
 
 "{seccion}": {SECCIONES[seccion]}
 
-Si no encuentras información suficiente en las fuentes permitidas, dilo
-explícitamente en el texto en vez de inventar datos.
+{SIN_RESULTADOS}
 
 Responde ÚNICAMENTE con un objeto JSON (sin texto adicional, sin markdown) con
 esta forma exacta:
-{{"{seccion}": "...", "fuentes": ["url1", "url2"]}}"""
+{{"{seccion}": "...", "fuentes": ["url1", "url2"], "observaciones": "..."}}"""
     else:
         listado = '\n'.join(
             f'{i}. "{clave}": {texto}' for i, (clave, texto) in enumerate(SECCIONES.items(), 1)
@@ -136,12 +159,11 @@ narrativo (no viñetas):
 
 {listado}
 
-Si no encuentras información suficiente en las fuentes permitidas para alguna
-sección, dilo explícitamente en el texto de esa sección en vez de inventar datos.
+{SIN_RESULTADOS}
 
 Responde ÚNICAMENTE con un objeto JSON (sin texto adicional, sin markdown) con
 esta forma exacta:
-{{"cifras": "...", "antecedentes": "...", "necesidades": "...", "fuentes": ["url1", "url2"]}}"""
+{{"cifras": "...", "antecedentes": "...", "necesidades": "...", "fuentes": ["url1", "url2"], "observaciones": "..."}}"""
 
     return f"""Eres un analista de planeación pública que prepara el diagnóstico de
 contexto para la formulación de un proyecto. Esta es la ficha del proyecto:
@@ -163,27 +185,108 @@ def _extraer_json(texto):
     return json.loads(texto[inicio:fin + 1])
 
 
-def _urls_consultadas(response):
-    """URLs de los resultados que devolvió la herramienta de búsqueda web."""
-    urls = []
-    for block in response.content:
+def _resultados_busqueda(contenido):
+    """Recorre los bloques de resultado de la búsqueda web: devuelve las URLs
+    obtenidas y los códigos de error (los errores de la herramienta no lanzan
+    excepción, llegan como un objeto en lugar de una lista)."""
+    urls, errores = [], []
+    for block in contenido:
         if getattr(block, 'type', None) != 'web_search_tool_result':
             continue
-        contenido = getattr(block, 'content', None)
-        if not isinstance(contenido, list):
-            continue  # error de búsqueda
-        for resultado in contenido:
-            url = getattr(resultado, 'url', None)
-            if url and url not in urls:
-                urls.append(url)
-    return urls
+        resultado = getattr(block, 'content', None)
+        if isinstance(resultado, list):
+            for item in resultado:
+                url = getattr(item, 'url', None)
+                if url and url not in urls:
+                    urls.append(url)
+        else:
+            errores.append(getattr(resultado, 'error_code', 'desconocido'))
+    return urls, errores
+
+
+def _texto_final(contenido):
+    """Texto escrito después de la última búsqueda (donde va el JSON). Si no
+    hay texto ahí, todo el texto de la respuesta."""
+    ultimo = -1
+    for i, block in enumerate(contenido):
+        if getattr(block, 'type', None) in ('server_tool_use', 'web_search_tool_result'):
+            ultimo = i
+    textos = [b.text for b in contenido[ultimo + 1:] if getattr(b, 'type', None) == 'text']
+    if not ''.join(textos).strip():
+        textos = [b.text for b in contenido if getattr(b, 'type', None) == 'text']
+    return ''.join(textos).strip()
+
+
+def _llamar_api(client, *, prompt, max_busquedas, dominios):
+    """Hace la llamada con búsqueda web y la reanuda mientras la API responda
+    "pause_turn", dentro del plazo total. Devuelve los bloques acumulados del
+    turno y el último stop_reason."""
+    import anthropic
+
+    tools = [{
+        'type': 'web_search_20260209',
+        'name': 'web_search',
+        'max_uses': max_busquedas,
+        'allowed_domains': dominios,
+    }]
+    limite = time.monotonic() + TIMEOUT_SEGUNDOS
+    contenido = []
+    response = None
+    for intento in range(MAX_CONTINUACIONES + 1):
+        restante = limite - time.monotonic()
+        if restante < 10:
+            break
+        messages = [{'role': 'user', 'content': prompt}]
+        if contenido:
+            # Reenviar el turno pausado tal cual; la API retoma donde quedó
+            messages.append({'role': 'assistant', 'content': list(contenido)})
+        try:
+            response = client.with_options(timeout=restante).beta.messages.create(
+                model=MODEL,
+                max_tokens=MAX_TOKENS,
+                output_config={'effort': EFFORT},
+                betas=BETAS,
+                fallbacks='default',
+                tools=tools,
+                messages=messages,
+            )
+        except anthropic.APITimeoutError as exc:
+            logger.warning('Diagnóstico: se superó el plazo de %s s (intento %s)', TIMEOUT_SEGUNDOS, intento + 1)
+            raise DiagnosticoError(
+                'La búsqueda tardó demasiado. Intenta de nuevo, prueba buscando una sola '
+                'sección o completa el diagnóstico manualmente.'
+            ) from exc
+        except anthropic.APIStatusError as exc:
+            logger.error(
+                'Diagnóstico: error %s de la API (request_id=%s): %s',
+                exc.status_code, getattr(exc, 'request_id', None), exc.message,
+            )
+            raise DiagnosticoError('No se pudo contactar el servicio de búsqueda. Intenta de nuevo.') from exc
+        except anthropic.APIConnectionError as exc:
+            logger.exception('Diagnóstico: error de conexión con la API')
+            raise DiagnosticoError('No se pudo contactar el servicio de búsqueda. Intenta de nuevo.') from exc
+
+        contenido.extend(response.content)
+        logger.info(
+            'Diagnóstico: intento %s, stop_reason=%s, request_id=%s',
+            intento + 1, response.stop_reason, response._request_id,
+        )
+        if response.stop_reason != 'pause_turn':
+            break
+
+    if response is None:
+        raise DiagnosticoError('La búsqueda tardó demasiado. Intenta de nuevo.')
+    return contenido, response.stop_reason
 
 
 def generar_diagnostico(*, pais, categoria, nombre, descripcion, contexto=None, seccion=None):
     """Busca y redacta el diagnóstico. Con `seccion` ('cifras', 'antecedentes'
     o 'necesidades') genera solo esa sección; sin ella, las tres.
     `contexto` es un dict opcional con más datos del proyecto (fechas, ODS,
-    leyes, articulaciones) para orientar la búsqueda."""
+    leyes, articulaciones) para orientar la búsqueda.
+
+    Devuelve las secciones pedidas (vacías si no hubo información), las
+    fuentes, las observaciones de la IA y `secciones_vacias`."""
     api_key = getattr(settings, 'ANTHROPIC_API_KEY', '')
     if not api_key:
         raise DiagnosticoError(
@@ -198,52 +301,53 @@ def generar_diagnostico(*, pais, categoria, nombre, descripcion, contexto=None, 
 
     import anthropic
 
-    client = anthropic.Anthropic(api_key=api_key, timeout=TIMEOUT_SEGUNDOS, max_retries=0)
+    client = anthropic.Anthropic(api_key=api_key, max_retries=0)
 
     ficha = _contexto_proyecto(
         nombre=nombre, categoria=categoria, pais=pais, descripcion=descripcion, contexto=contexto,
     )
     prompt = _construir_prompt(ficha=ficha, pais=pais, seccion=seccion)
 
-    try:
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=4096,
-            tools=[{
-                'type': 'web_search_20260209',
-                'name': 'web_search',
-                'max_uses': MAX_BUSQUEDAS_SECCION if seccion else MAX_BUSQUEDAS_COMPLETO,
-                'allowed_domains': dominios,
-            }],
-            messages=[{'role': 'user', 'content': prompt}],
-        )
-    except anthropic.APITimeoutError as exc:
-        logger.warning('La búsqueda del diagnóstico superó %s s', TIMEOUT_SEGUNDOS)
-        raise DiagnosticoError(
-            'La búsqueda tardó demasiado. Intenta de nuevo, prueba buscando una sola '
-            'sección o completa el diagnóstico manualmente.'
-        ) from exc
-    except anthropic.APIError as exc:
-        logger.exception('Error llamando a la API de Anthropic para el diagnóstico')
-        raise DiagnosticoError('No se pudo contactar el servicio de búsqueda. Intenta de nuevo.') from exc
+    contenido, stop_reason = _llamar_api(
+        client,
+        prompt=prompt,
+        max_busquedas=MAX_BUSQUEDAS_SECCION if seccion else MAX_BUSQUEDAS_COMPLETO,
+        dominios=dominios,
+    )
+    urls, errores_busqueda = _resultados_busqueda(contenido)
+    if errores_busqueda:
+        logger.warning('Diagnóstico: errores de la herramienta de búsqueda: %s', errores_busqueda)
 
-    texto = ''.join(
-        block.text for block in response.content if getattr(block, 'type', None) == 'text'
-    ).strip()
+    if stop_reason == 'refusal':
+        raise DiagnosticoError('El servicio de búsqueda no pudo procesar esta solicitud. Revisa la descripción e intenta de nuevo.')
 
+    texto = _texto_final(contenido)
     try:
         data = _extraer_json(texto)
     except (json.JSONDecodeError, ValueError) as exc:
-        logger.error('Respuesta no parseable del diagnóstico: %r', texto)
+        logger.error('Respuesta no parseable del diagnóstico (stop_reason=%s): %r', stop_reason, texto[:2000])
+        if stop_reason in ('pause_turn', 'max_tokens'):
+            raise DiagnosticoError(
+                'La búsqueda no alcanzó a terminar. Intenta buscando una sola sección.'
+            ) from exc
         raise DiagnosticoError('La respuesta del servicio de búsqueda no tuvo el formato esperado.') from exc
 
     # Fuentes: las que cita la IA; si no citó ninguna, las primeras que
     # devolvió el buscador, para que el usuario pueda verificar.
     fuentes = [u for u in data.get('fuentes', []) if isinstance(u, str) and u]
     if not fuentes:
-        fuentes = _urls_consultadas(response)[:MAX_FUENTES_RESPALDO]
+        fuentes = urls[:MAX_FUENTES_RESPALDO]
 
     secciones = [seccion] if seccion else list(SECCIONES)
-    resultado = {clave: data.get(clave, '') for clave in secciones}
-    resultado['fuentes'] = fuentes
+    resultado = {clave: (data.get(clave) or '').strip() for clave in secciones}
+    vacias = [clave for clave in secciones if not resultado[clave]]
+    observaciones = (data.get('observaciones') or '').strip()
+    if vacias and not observaciones and errores_busqueda:
+        observaciones = 'El servicio de búsqueda no pudo consultar algunas de las fuentes oficiales en este momento.'
+
+    resultado.update({
+        'fuentes': fuentes if len(vacias) < len(secciones) else [],
+        'observaciones': observaciones,
+        'secciones_vacias': vacias,
+    })
     return resultado

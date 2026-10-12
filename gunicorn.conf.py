@@ -5,7 +5,7 @@
 # varios minutos; con el timeout por defecto (30 s) el worker se reiniciaba y
 # el navegador recibía un 502. Debe ser mayor que TIMEOUT_SEGUNDOS de
 # usuarios/diagnostico.py.
-timeout = 200
+timeout = 300
 
 # Hilos para que una búsqueda larga no bloquee al resto de usuarios
 # (en el plan free solo hay un proceso).

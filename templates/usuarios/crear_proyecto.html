@@ -514,6 +514,36 @@
         </div>
     </div>
 
+    <!-- Modal de aviso del resultado de la búsqueda (sin resultados, parcial o error) -->
+    <div id="modal-aviso" class="fixed inset-0 items-center justify-center bg-[#3a1408]/60 backdrop-blur-sm p-4"
+         style="display:none; z-index:2147483001;" role="alertdialog" aria-modal="true" aria-labelledby="modal-aviso-titulo" aria-describedby="modal-aviso-mensaje">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8">
+            <div class="flex items-start gap-4">
+                <div id="modal-aviso-icono" class="shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl" aria-hidden="true"></div>
+                <div class="min-w-0">
+                    <h3 id="modal-aviso-titulo" class="text-lg font-bold text-gray-800"></h3>
+                    <p id="modal-aviso-mensaje" class="mt-2 text-sm text-gray-600 whitespace-pre-line"></p>
+                    <p id="modal-aviso-observaciones" class="mt-3 text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3" style="display:none;"></p>
+                    <div id="modal-aviso-consejos" class="mt-4" style="display:none;">
+                        <p class="text-xs font-bold uppercase text-gray-500 mb-1">{% trans "Para mejorar los resultados:" %}</p>
+                        <ul class="list-disc ml-5 text-sm text-gray-600 space-y-1">
+                            <li>{% trans "Precisa en la descripción del Paso 1 el municipio o departamento, la población objetivo, el sector y el problema." %}</li>
+                            <li>{% trans "Marca los ODS relacionados y completa al menos una articulación (nacional, regional o municipal)." %}</li>
+                            <li>{% trans "Usa “Buscar esta sección” para intentar de nuevo solo la sección que quedó vacía." %}</li>
+                            <li>{% trans "Si la información no está publicada en las fuentes oficiales, complétala manualmente." %}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button type="button" id="modal-aviso-cerrar" onclick="cerrarAviso()"
+                    class="px-6 py-2 bg-gradient-to-r from-[#7c2d12] to-[#c2410c] text-white rounded-lg hover:brightness-110 shadow-md transition font-bold">
+                    {% trans "Entendido" %}
+                </button>
+            </div>
+        </div>
+    </div>
+
 {{ leyes_seleccionadas|json_script:"leyes-seleccionadas" }}
 <script>
     const I18N = {
@@ -535,6 +565,13 @@
         diagError: "{% trans 'No se pudo completar la búsqueda.' %}",
         diagCancelada: "{% trans 'Búsqueda cancelada. Puedes intentarlo de nuevo o completar el diagnóstico manualmente.' %}",
         diagTardando: "{% trans 'La búsqueda lleva %s segundos. ¿Deseas seguir esperando?' %}",
+        diagSinResultados: "{% trans 'No se encontró información en las fuentes oficiales.' %}",
+        diagSinResultadosTitulo: "{% trans 'No se encontró información' %}",
+        diagSinResultadosMensaje: "{% trans 'La búsqueda en las fuentes oficiales no encontró información para: %s.' %}",
+        diagParcial: "{% trans 'Se encontró información solo para algunas secciones.' %}",
+        diagParcialTitulo: "{% trans 'Búsqueda completada parcialmente' %}",
+        diagParcialMensaje: "{% trans 'Se encontró información para: %(encontradas)s. No se encontró información para: %(vacias)s.' %}",
+        diagErrorTitulo: "{% trans 'No se pudo completar la búsqueda' %}",
         seleccionaCategoria: "{% trans 'Selecciona la categoría del proyecto.' %}",
         ingresaFechaInicio: "{% trans 'Ingresa la fecha de inicio del proyecto.' %}",
         seleccionaPais: "{% trans 'Selecciona el país donde se ejecutará el proyecto.' %}",
@@ -1056,6 +1093,7 @@
         datos.append('csrfmiddlewaretoken', csrfEl ? csrfEl.value : '');
 
         const controlador = new AbortController();
+        let aviso = null;  // se muestra en un modal al cerrar el loader
         btn.disabled = true;
         estado.textContent = I18N.diagBuscando;
         loader.abrir(controlador);
@@ -1079,16 +1117,82 @@
                     if (fuentesInput) fuentesInput.value = todas.join('\n');
                     pintarFuentes(todas);
                 }
-                estado.textContent = I18N.diagListo;
+                // Avisar con un modal si alguna sección pedida quedó sin información
+                const vacias = data.secciones_vacias || [];
+                const pedidas = seccion ? [seccion] : Object.keys(NOMBRES_SECCION);
+                if (vacias.length === pedidas.length) {
+                    estado.textContent = I18N.diagSinResultados;
+                    aviso = {
+                        tipo: 'vacio',
+                        titulo: I18N.diagSinResultadosTitulo,
+                        mensaje: I18N.diagSinResultadosMensaje.replace('%s', vacias.map(v => NOMBRES_SECCION[v]).join(', ')),
+                        observaciones: data.observaciones,
+                    };
+                } else if (vacias.length) {
+                    estado.textContent = I18N.diagParcial;
+                    aviso = {
+                        tipo: 'parcial',
+                        titulo: I18N.diagParcialTitulo,
+                        mensaje: I18N.diagParcialMensaje
+                            .replace('%(encontradas)s', pedidas.filter(p => !vacias.includes(p)).map(v => NOMBRES_SECCION[v]).join(', '))
+                            .replace('%(vacias)s', vacias.map(v => NOMBRES_SECCION[v]).join(', ')),
+                        observaciones: data.observaciones,
+                    };
+                } else {
+                    estado.textContent = I18N.diagListo;
+                }
             })
             .catch((err) => {
-                estado.textContent = err.name === 'AbortError' ? I18N.diagCancelada : err.message;
+                if (err.name === 'AbortError') {
+                    estado.textContent = I18N.diagCancelada;
+                    return;
+                }
+                estado.textContent = err.message;
+                aviso = { tipo: 'error', titulo: I18N.diagErrorTitulo, mensaje: err.message };
             })
             .finally(() => {
                 loader.cerrar();
                 btn.disabled = false;
+                if (aviso) mostrarAviso(aviso);
             });
     }
+
+    const NOMBRES_SECCION = {
+        cifras: I18N.cifrasLbl,
+        antecedentes: I18N.antecedentesLbl,
+        necesidades: I18N.necesidadesLbl,
+    };
+
+    // Modal de aviso: 'vacio' (sin información), 'parcial' o 'error'
+    function mostrarAviso({ tipo, titulo, mensaje, observaciones }) {
+        const modal = document.getElementById('modal-aviso');
+        const icono = document.getElementById('modal-aviso-icono');
+        const estilos = {
+            vacio: ['bg-amber-100 text-amber-700', '?'],
+            parcial: ['bg-blue-100 text-blue-700', 'i'],
+            error: ['bg-red-100 text-red-700', '!'],
+        }[tipo];
+        icono.className = `shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl font-bold ${estilos[0]}`;
+        icono.textContent = estilos[1];
+        document.getElementById('modal-aviso-titulo').textContent = titulo;
+        document.getElementById('modal-aviso-mensaje').textContent = mensaje;
+        const obs = document.getElementById('modal-aviso-observaciones');
+        obs.textContent = observaciones || '';
+        obs.style.display = observaciones ? 'block' : 'none';
+        document.getElementById('modal-aviso-consejos').style.display = tipo === 'error' ? 'none' : 'block';
+        modal.style.display = 'flex';
+        document.getElementById('modal-aviso-cerrar').focus();
+    }
+
+    function cerrarAviso() {
+        document.getElementById('modal-aviso').style.display = 'none';
+        const btn = document.getElementById('btnDiagnostico');
+        if (btn) btn.focus();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && document.getElementById('modal-aviso').style.display === 'flex') cerrarAviso();
+    });
 
     function pintarFuentes(fuentes) {
         const fuentesWrap = document.getElementById('diagnostico-fuentes-wrap');

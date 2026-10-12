@@ -198,25 +198,35 @@ class CrearProyectoWizardTests(TestCase):
         self.assertIsNone(proyecto.presupuesto)
 
 
-def respuesta_api(texto, urls_buscador=()):
+def respuesta_api(texto, urls_buscador=(), stop_reason='end_turn', error_busqueda=None):
     """Simula la respuesta de messages.create con un bloque de búsqueda web y uno de texto."""
-    return SimpleNamespace(content=[
-        SimpleNamespace(type='web_search_tool_result',
-                        content=[SimpleNamespace(url=u) for u in urls_buscador]),
-        SimpleNamespace(type='text', text=texto),
-    ])
+    resultado_busqueda = (
+        SimpleNamespace(type='web_search_tool_result_error', error_code=error_busqueda)
+        if error_busqueda else [SimpleNamespace(url=u) for u in urls_buscador]
+    )
+    contenido = [
+        SimpleNamespace(type='server_tool_use'),
+        SimpleNamespace(type='web_search_tool_result', content=resultado_busqueda),
+    ]
+    if texto is not None:
+        contenido.append(SimpleNamespace(type='text', text=texto))
+    return SimpleNamespace(content=contenido, stop_reason=stop_reason, _request_id='req_prueba')
 
 
 @override_settings(ANTHROPIC_API_KEY='clave-de-prueba')
 class GenerarDiagnosticoTests(TestCase):
-    def llamar(self, texto, urls=(), **kwargs):
+    def llamar(self, texto, urls=(), respuestas=None, **kwargs):
+        """Ejecuta generar_diagnostico con la API simulada. Devuelve el resultado
+        y los kwargs de la última llamada a la API."""
         with mock.patch('anthropic.Anthropic') as cliente:
-            cliente.return_value.messages.create.return_value = respuesta_api(texto, urls)
+            create = cliente.return_value.with_options.return_value.beta.messages.create
+            create.side_effect = respuestas or [respuesta_api(texto, urls)]
             resultado = diagnostico.generar_diagnostico(
                 pais='HND', categoria='Público', nombre='Centro',
                 descripcion='Centro para adultos mayores en Choluteca', **kwargs,
             )
-            return resultado, cliente.return_value.messages.create.call_args.kwargs
+            self.create = create
+            return resultado, create.call_args.kwargs
 
     def test_incluye_contexto_y_fuentes_ampliadas(self):
         _, llamada = self.llamar(
@@ -234,7 +244,10 @@ class GenerarDiagnosticoTests(TestCase):
 
     def test_busqueda_por_seccion_devuelve_solo_esa_seccion(self):
         resultado, llamada = self.llamar('{"cifras": "Dato 2024 (INE)", "fuentes": ["https://ine.gob.hn/x"]}', seccion='cifras')
-        self.assertEqual(resultado, {'cifras': 'Dato 2024 (INE)', 'fuentes': ['https://ine.gob.hn/x']})
+        self.assertEqual(resultado, {
+            'cifras': 'Dato 2024 (INE)', 'fuentes': ['https://ine.gob.hn/x'],
+            'observaciones': '', 'secciones_vacias': [],
+        })
         self.assertEqual(llamada['tools'][0]['max_uses'], diagnostico.MAX_BUSQUEDAS_SECCION)
         self.assertIn('UNA sola sección', llamada['messages'][0]['content'])
 
@@ -250,6 +263,46 @@ class GenerarDiagnosticoTests(TestCase):
         urls = [f'https://ine.gob.hn/{i}' for i in range(15)]
         resultado, _ = self.llamar('{"cifras": "x", "antecedentes": "y", "necesidades": "z"}', urls)
         self.assertEqual(resultado['fuentes'], urls[:diagnostico.MAX_FUENTES_RESPALDO])
+
+    def test_usa_modelo_actual_con_fallback_y_tokens_suficientes(self):
+        _, llamada = self.llamar('{"cifras": "a", "antecedentes": "b", "necesidades": "c"}')
+        self.assertEqual(llamada['model'], 'claude-opus-5-5')
+        self.assertEqual(llamada['fallbacks'], 'default')
+        self.assertIn('server-side-fallback-2026-07-01', llamada['betas'])
+        self.assertGreaterEqual(llamada['max_tokens'], 16000)
+
+    def test_reanuda_pause_turn(self):
+        pausada = respuesta_api(None, ['https://ine.gob.hn/1'], stop_reason='pause_turn')
+        final = respuesta_api('{"cifras": "a", "antecedentes": "b", "necesidades": "c", "fuentes": []}')
+        resultado, llamada = self.llamar(None, respuestas=[pausada, final])
+        self.assertEqual(self.create.call_count, 2)
+        # La continuación reenvía el turno pausado como mensaje del asistente
+        self.assertEqual(llamada['messages'][1]['role'], 'assistant')
+        self.assertEqual(llamada['messages'][1]['content'], pausada.content)
+        self.assertEqual(resultado['cifras'], 'a')
+
+    def test_pause_turn_sin_terminar_da_error_controlado(self):
+        pausadas = [respuesta_api(None, stop_reason='pause_turn')] * (diagnostico.MAX_CONTINUACIONES + 1)
+        with self.assertRaisesMessage(diagnostico.DiagnosticoError, 'no alcanzó a terminar'):
+            self.llamar(None, respuestas=pausadas)
+
+    def test_secciones_vacias_y_observaciones(self):
+        resultado, _ = self.llamar(
+            '{"cifras": "", "antecedentes": "Dato", "necesidades": "  ", "fuentes": ["https://ine.gob.hn/a"], '
+            '"observaciones": "No hay series municipales publicadas."}'
+        )
+        self.assertEqual(resultado['secciones_vacias'], ['cifras', 'necesidades'])
+        self.assertEqual(resultado['observaciones'], 'No hay series municipales publicadas.')
+        self.assertEqual(resultado['fuentes'], ['https://ine.gob.hn/a'])
+
+    def test_sin_resultados_por_error_de_busqueda(self):
+        resultado, _ = self.llamar(
+            '{"cifras": "", "antecedentes": "", "necesidades": ""}',
+            respuestas=[respuesta_api('{"cifras": "", "antecedentes": "", "necesidades": ""}', error_busqueda='unavailable')],
+        )
+        self.assertEqual(resultado['secciones_vacias'], ['cifras', 'antecedentes', 'necesidades'])
+        self.assertIn('no pudo consultar', resultado['observaciones'])
+        self.assertEqual(resultado['fuentes'], [])
 
     def test_el_salvador_usa_bcr_en_vez_de_digestyc(self):
         self.assertIn('bcr.gob.sv', diagnostico.FUENTES_POR_PAIS['SLV'])
