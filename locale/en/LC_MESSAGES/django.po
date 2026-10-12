@@ -993,3 +993,62 @@ msgstr ""
 
 msgid "No se pudo completar la búsqueda"
 msgstr "The search could not be completed"
+
+msgid "Fin de la pobreza"
+msgstr "No poverty"
+
+msgid "Hambre cero"
+msgstr "Zero hunger"
+
+msgid "Salud y bienestar"
+msgstr "Good health and well-being"
+
+msgid "Educación de calidad"
+msgstr "Quality education"
+
+msgid "Igualdad de género"
+msgstr "Gender equality"
+
+msgid "Agua limpia y saneamiento"
+msgstr "Clean water and sanitation"
+
+msgid "Energía asequible y no contaminante"
+msgstr "Affordable and clean energy"
+
+msgid "Trabajo decente y crecimiento económico"
+msgstr "Decent work and economic growth"
+
+msgid "Industria, innovación e infraestructura"
+msgstr "Industry, innovation and infrastructure"
+
+msgid "Reducción de las desigualdades"
+msgstr "Reduced inequalities"
+
+msgid "Ciudades y comunidades sostenibles"
+msgstr "Sustainable cities and communities"
+
+msgid "Producción y consumo responsables"
+msgstr "Responsible consumption and production"
+
+msgid "Acción por el clima"
+msgstr "Climate action"
+
+msgid "Vida submarina"
+msgstr "Life below water"
+
+msgid "Vida de ecosistemas terrestres"
+msgstr "Life on land"
+
+msgid "Paz, justicia e instituciones sólidas"
+msgstr "Peace, justice and strong institutions"
+
+msgid "Alianzas para lograr los objetivos"
+msgstr "Partnerships for the goals"
+
+msgid ""
+"Selecciona los Objetivos de Desarrollo Sostenible a los que aporta el "
+"proyecto"
+msgstr "Select the Sustainable Development Goals the project contributes to"
+
+msgid "seleccionados"
+msgstr "selected"

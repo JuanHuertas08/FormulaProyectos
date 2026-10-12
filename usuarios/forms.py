@@ -45,13 +45,16 @@ class Paso1ProjectForm(forms.ModelForm):
 
 
     # 1. Definición de Opciones (Choices)
+    # Nombres oficiales de los ODS (el número se muestra aparte, en el color
+    # oficial de cada objetivo; ver .ods-N en crear_proyecto.html)
     ODS_CHOICES = [
-        ('1', _('1. Fin de la pobreza')), ('2', _('2. Hambre cero')), ('3', _('3. Salud y bienestar')),
-        ('4', _('4. Educación de calidad')), ('5', _('5. Igualdad de género')), ('6', _('6. Agua limpia y saneamiento')),
-        ('7', _('7. Energía asequible')), ('8', _('8. Trabajo decente y crecimiento')), ('9', _('9. Industria, innovación e infra.')),
-        ('10', _('10. Reducción de desigualdades')), ('11', _('11. Ciudades sostenibles')), ('12', _('12. Producción y consumo resp.')),
-        ('13', _('13. Acción por el clima')), ('14', _('14. Vida submarina')), ('15', _('15. Vida de ecosistemas terrestres')),
-        ('16', _('16. Paz, justicia e inst. sólidas')), ('17', _('17. Alianzas para lograr objetivos'))
+        ('1', _('Fin de la pobreza')), ('2', _('Hambre cero')), ('3', _('Salud y bienestar')),
+        ('4', _('Educación de calidad')), ('5', _('Igualdad de género')), ('6', _('Agua limpia y saneamiento')),
+        ('7', _('Energía asequible y no contaminante')), ('8', _('Trabajo decente y crecimiento económico')),
+        ('9', _('Industria, innovación e infraestructura')), ('10', _('Reducción de las desigualdades')),
+        ('11', _('Ciudades y comunidades sostenibles')), ('12', _('Producción y consumo responsables')),
+        ('13', _('Acción por el clima')), ('14', _('Vida submarina')), ('15', _('Vida de ecosistemas terrestres')),
+        ('16', _('Paz, justicia e instituciones sólidas')), ('17', _('Alianzas para lograr los objetivos')),
     ]
 
     CATEGORIA_CHOICES = [
@@ -80,7 +83,7 @@ class Paso1ProjectForm(forms.ModelForm):
 
     objetivos_desarrollo = forms.MultipleChoiceField(
         choices=ODS_CHOICES, 
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'grid grid-cols-1 md:grid-cols-2 gap-2'}),
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'ods-check h-4 w-4 shrink-0 mt-0.5 accent-[#c2410c] cursor-pointer'}),
         required=False
     )
 

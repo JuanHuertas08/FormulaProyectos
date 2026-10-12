@@ -16,6 +16,14 @@
         .step-line { flex: 1; height: 2px; background-color: #e5e7eb; align-self: center; margin: 0 10px; }
         .step-indicator.active { background: linear-gradient(135deg, #7c2d12, #c2410c); color: white; border-color: #c2410c; }
         .step-indicator.completed { background-color: #10b981; color: white; border-color: #10b981; }
+
+        /* Colores oficiales de los Objetivos de Desarrollo Sostenible (ONU) */
+        .ods-1 { background: #E5243B; } .ods-2 { background: #DDA63A; } .ods-3 { background: #4C9F38; }
+        .ods-4 { background: #C5192D; } .ods-5 { background: #FF3A21; } .ods-6 { background: #26BDE2; }
+        .ods-7 { background: #FCC30B; } .ods-8 { background: #A21942; } .ods-9 { background: #FD6925; }
+        .ods-10 { background: #DD1367; } .ods-11 { background: #FD9D24; } .ods-12 { background: #BF8B2E; }
+        .ods-13 { background: #3F7E44; } .ods-14 { background: #0A97D9; } .ods-15 { background: #56C02B; }
+        .ods-16 { background: #00689D; } .ods-17 { background: #19486A; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -149,9 +157,18 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-4 rounded-lg border border-gray-200 lg:col-span-2">
-                <label class="block text-sm font-bold text-gray-800 mb-2">{% trans "Articulación Internacional (ODS)" %}</label>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 text-sm text-gray-600 max-h-40 overflow-y-auto p-2 border rounded bg-gray-50 mb-3">
-                    {{ form.objetivos_desarrollo }}
+                <div class="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                    <label class="block text-sm font-bold text-gray-800">{% trans "Articulación Internacional (ODS)" %}</label>
+                    <span class="text-xs text-gray-500">{% trans "Selecciona los Objetivos de Desarrollo Sostenible a los que aporta el proyecto" %} · <strong id="ods-contador" class="text-[#c2410c]">0</strong> {% trans "seleccionados" %}</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-2 mb-4">
+                    {% for opcion in form.objetivos_desarrollo %}
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-gray-200 bg-white text-xs text-gray-700 cursor-pointer transition hover:border-[#c2410c]/50 has-[:checked]:border-[#c2410c] has-[:checked]:bg-orange-50 has-[:checked]:text-gray-900">
+                        {{ opcion.tag }}
+                        <span class="ods-{{ opcion.data.value }} shrink-0 w-6 h-6 rounded text-white text-[11px] font-bold flex items-center justify-center" aria-hidden="true">{{ opcion.data.value }}</span>
+                        <span class="leading-tight">{{ opcion.choice_label }}</span>
+                    </label>
+                    {% endfor %}
                 </div>
                 <div class="flex flex-wrap gap-4 items-end border-t pt-3">
                     <div class="flex-1">
@@ -1300,6 +1317,14 @@
             ? `<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm"><p class="font-bold mb-1">${I18N.alertaTitulo}</p><ul class="list-disc ml-5 space-y-0.5">${avisos.map(a => `<li>${a}</li>`).join('')}</ul></div>`
             : `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 text-sm font-semibold">✓ ${I18N.listoGuardar}</div>`;
     }
+
+    // Contador de ODS seleccionados (Paso 1)
+    function actualizarContadorODS() {
+        const contador = document.getElementById('ods-contador');
+        if (contador) contador.textContent = form.querySelectorAll('.ods-check:checked').length;
+    }
+    form.querySelectorAll('.ods-check').forEach(c => c.addEventListener('change', actualizarContadorODS));
+    actualizarContadorODS();
 
     // --- Inicialización ---
     const fuentesGuardadas = valor('diagnostico_fuentes');

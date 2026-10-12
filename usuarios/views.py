@@ -72,7 +72,7 @@ def buscar_diagnostico(request):
         etiquetas_ods = dict(Paso1ProjectForm.ODS_CHOICES)
         etiquetas_categoria = dict(Paso1ProjectForm.CATEGORIA_CHOICES)
         categoria = str(etiquetas_categoria.get(request.POST.get('categoria', ''), ''))
-        ods = [str(etiquetas_ods[c]) for c in request.POST.getlist('ods') if c in etiquetas_ods]
+        ods = [f'ODS {c}: {etiquetas_ods[c]}' for c in request.POST.getlist('ods') if c in etiquetas_ods]
 
     contexto = {
         'fecha_inicio': request.POST.get('fecha_inicio', ''),

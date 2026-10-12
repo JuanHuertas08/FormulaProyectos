@@ -325,7 +325,7 @@ class BuscarDiagnosticoVistaTests(TestCase):
         kwargs = gen.call_args.kwargs
         self.assertEqual(kwargs['seccion'], 'cifras')
         self.assertEqual(kwargs['categoria'], 'Público')
-        self.assertEqual(kwargs['contexto']['ods'], ['3. Salud y bienestar'])  # código inválido descartado
+        self.assertEqual(kwargs['contexto']['ods'], ['ODS 3: Salud y bienestar'])  # código inválido descartado
         self.assertEqual(kwargs['contexto']['leyes'], ['Ley 100 de 1993'])
         self.assertEqual(kwargs['contexto']['articulacion_regional'], 'Plan Cundinamarca')
 
