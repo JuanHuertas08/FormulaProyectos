@@ -1,0 +1,39 @@
+{% load i18n %}
+<div class="fila-formset bg-white border border-gray-200 rounded-xl p-4 shadow-sm {% if f.DELETE.value %}hidden{% endif %}" data-formset="riesgos_matriz">
+    {{ f.id }}
+    <div class="flex items-start gap-3">
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-6 gap-3">
+            <div class="md:col-span-4">
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Riesgo" %}</label>
+                {{ f.descripcion }}{% for e in f.descripcion.errors %}<p class="text-red-500 text-[11px]">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Tipo" %}</label>
+                {{ f.tipo }}{% for e in f.tipo.errors %}<p class="text-red-500 text-[11px]">{{ e }}</p>{% endfor %}
+            </div>
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Probabilidad" %}</label>
+                {{ f.probabilidad }}
+            </div>
+            <div>
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Impacto" %}</label>
+                {{ f.impacto }}
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Responsable" %}</label>
+                {{ f.responsable }}
+            </div>
+            <div class="md:col-span-2 flex items-end">
+                <span class="nivel-riesgo w-full text-center text-xs font-bold px-3 py-2.5 rounded-lg"></span>
+            </div>
+            <div class="md:col-span-6">
+                <label class="block text-[10px] uppercase font-bold text-gray-500">{% trans "Medida de mitigación" %}</label>
+                {{ f.mitigacion }}
+            </div>
+        </div>
+        <div>
+            <span class="hidden">{{ f.DELETE }}</span>
+            <button type="button" onclick="eliminarFila(this)" class="text-gray-400 hover:text-red-600 p-2" title="{% trans 'Eliminar' %}">&#10005;</button>
+        </div>
+    </div>
+</div>

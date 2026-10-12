@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from .models import Proyecto, DocumentoSoporte
+from .models import Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
 
 class RegistroForm(forms.ModelForm):
     nombres = forms.CharField(label=_("Nombres"), widget=forms.TextInput(attrs={'placeholder': 'Ej. Juan Pedro'}))
@@ -97,19 +97,20 @@ class Paso1ProjectForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'type': 'date'})
     )
 
-    # Paso 4: Recursos
+    # Paso 4: Recursos. El total se calcula a partir de los rubros (ver
+    # ProyectoRubroFormSet); el campo queda solo lectura en la UI.
     presupuesto = forms.DecimalField(
-        label=_("Presupuesto Estimado (USD)"),
+        label=_("Presupuesto Total (USD)"),
         required=False,
         min_value=0,
-        widget=forms.NumberInput(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'placeholder': '0.00', 'step': '0.01'})
+        widget=forms.NumberInput(attrs={'class': 'w-full p-3 border rounded-lg bg-gray-50 font-bold', 'readonly': 'readonly', 'step': '0.01'})
     )
 
     # Paso 5: Riesgos
     riesgos = forms.CharField(
-        label=_("Identificación de Riesgos"),
+        label=_("Observaciones generales sobre riesgos"),
         required=False,
-        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 5, 'placeholder': _('Menciona posibles obstáculos críticos')})
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 3, 'placeholder': _('Supuestos, dependencias externas u otros comentarios')})
     )
 
     # Paso 2: Diagnóstico del contexto (cargado por IA, editable/ampliable)
@@ -153,3 +154,81 @@ class Paso1ProjectForm(forms.ModelForm):
             'articulacion_municipal': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_institucional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
                     }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inicio = cleaned_data.get('fecha_inicio')
+        fin = cleaned_data.get('fecha_fin')
+        if inicio and fin and fin < inicio:
+            self.add_error('fecha_fin', _('La fecha de finalización no puede ser anterior a la fecha de inicio.'))
+        return cleaned_data
+
+
+# --- Pasos 3, 4 y 5: tablas dinámicas (filas agregadas/eliminadas por JS) ---
+
+CELDA = 'w-full p-2 border rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none bg-white'
+
+
+class ActividadForm(forms.ModelForm):
+    class Meta:
+        model = ActividadCronograma
+        fields = ['tipo', 'nombre', 'responsable', 'fecha_inicio', 'fecha_fin', 'entregable']
+        widgets = {
+            'tipo': forms.Select(attrs={'class': CELDA}),
+            'nombre': forms.TextInput(attrs={'class': CELDA, 'placeholder': _('Ej: Diagnóstico participativo')}),
+            'responsable': forms.TextInput(attrs={'class': CELDA}),
+            'fecha_inicio': forms.DateInput(attrs={'class': CELDA, 'type': 'date'}, format='%Y-%m-%d'),
+            'fecha_fin': forms.DateInput(attrs={'class': CELDA, 'type': 'date'}, format='%Y-%m-%d'),
+            'entregable': forms.TextInput(attrs={'class': CELDA}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        inicio = cleaned_data.get('fecha_inicio')
+        fin = cleaned_data.get('fecha_fin')
+        if inicio and fin and fin < inicio:
+            self.add_error('fecha_fin', _('El fin de la actividad no puede ser anterior a su inicio.'))
+        return cleaned_data
+
+
+class RubroForm(forms.ModelForm):
+    class Meta:
+        model = RubroPresupuesto
+        fields = ['rubro', 'descripcion', 'fuente', 'monto']
+        widgets = {
+            'rubro': forms.Select(attrs={'class': CELDA}),
+            'descripcion': forms.TextInput(attrs={'class': CELDA, 'placeholder': _('Detalle del gasto')}),
+            'fuente': forms.Select(attrs={'class': CELDA}),
+            'monto': forms.NumberInput(attrs={'class': CELDA + ' text-right', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
+        }
+
+    def clean_monto(self):
+        monto = self.cleaned_data.get('monto')
+        if monto is not None and monto <= 0:
+            raise ValidationError(_('El monto debe ser mayor que cero.'))
+        return monto
+
+
+class RiesgoForm(forms.ModelForm):
+    class Meta:
+        model = RiesgoProyecto
+        fields = ['descripcion', 'tipo', 'probabilidad', 'impacto', 'mitigacion', 'responsable']
+        widgets = {
+            'descripcion': forms.TextInput(attrs={'class': CELDA, 'placeholder': _('Ej: Retraso en desembolsos')}),
+            'tipo': forms.Select(attrs={'class': CELDA}),
+            'probabilidad': forms.Select(attrs={'class': CELDA}),
+            'impacto': forms.Select(attrs={'class': CELDA}),
+            'mitigacion': forms.Textarea(attrs={'class': CELDA, 'rows': 2}),
+            'responsable': forms.TextInput(attrs={'class': CELDA}),
+        }
+
+
+def _formset(form, **extra):
+    return forms.inlineformset_factory(
+        Proyecto, form._meta.model, form=form, extra=0, can_delete=True, **extra,
+    )
+
+
+ActividadFormSet = _formset(ActividadForm)
+RubroFormSet = _formset(RubroForm)
+RiesgoFormSet = _formset(RiesgoForm)

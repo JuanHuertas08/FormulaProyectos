@@ -60,7 +60,7 @@ class Proyecto(models.Model):
     # Paso 4: Recursos
     presupuesto = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     # Paso 5: Riesgos
-    riesgos = models.TextField(blank=True)
+    riesgos = models.TextField(blank=True)  # observaciones generales; la matriz vive en RiesgoProyecto
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     # Paso 2: Diagnóstico del contexto (autocompletado por IA + editable por el usuario)
@@ -100,3 +100,91 @@ class DocumentoSoporte(models.Model):
     archivo = models.FileField(upload_to='soportes_estrategicos/')
     tipo_documento = models.CharField(max_length=20, choices=TIPO_CHOICES)
     seccion = models.CharField(max_length=5, choices=SECCION_CHOICES)
+
+class ActividadCronograma(models.Model):
+    """Paso 3: actividad o hito del cronograma del proyecto."""
+    TIPO_CHOICES = [
+        ('ACTIVIDAD', _('Actividad')),
+        ('HITO', _('Hito')),
+    ]
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='actividades')
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='ACTIVIDAD')
+    nombre = models.CharField(_('Actividad'), max_length=255)
+    responsable = models.CharField(_('Responsable'), max_length=150, blank=True)
+    fecha_inicio = models.DateField(_('Inicio'))
+    fecha_fin = models.DateField(_('Fin'))
+    entregable = models.CharField(_('Entregable'), max_length=255, blank=True)
+
+    class Meta:
+        ordering = ['fecha_inicio', 'id']
+
+    def __str__(self):
+        return self.nombre
+
+
+class RubroPresupuesto(models.Model):
+    """Paso 4: línea del presupuesto, por rubro y fuente de financiamiento."""
+    RUBRO_CHOICES = [
+        ('TALENTO', _('Talento humano')),
+        ('EQUIPOS', _('Equipos y tecnología')),
+        ('MATERIALES', _('Materiales e insumos')),
+        ('SERVICIOS', _('Servicios y consultorías')),
+        ('INFRA', _('Infraestructura y obras')),
+        ('LOGISTICA', _('Viajes y logística')),
+        ('ADMIN', _('Gastos administrativos')),
+        ('OTRO', _('Otros')),
+    ]
+    FUENTE_CHOICES = [
+        ('PROPIOS', _('Recursos propios')),
+        ('PUBLICO', _('Presupuesto público')),
+        ('COOPERACION', _('Cooperación internacional')),
+        ('PRIVADO', _('Aporte privado')),
+        ('CREDITO', _('Crédito / financiamiento')),
+    ]
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='rubros')
+    rubro = models.CharField(_('Rubro'), max_length=20, choices=RUBRO_CHOICES)
+    descripcion = models.CharField(_('Descripción'), max_length=255, blank=True)
+    fuente = models.CharField(_('Fuente'), max_length=20, choices=FUENTE_CHOICES)
+    monto = models.DecimalField(_('Monto (USD)'), max_digits=14, decimal_places=2)
+
+    def __str__(self):
+        return f'{self.get_rubro_display()} - {self.monto}'
+
+
+class RiesgoProyecto(models.Model):
+    """Paso 5: riesgo identificado, con su valoración probabilidad x impacto."""
+    TIPO_CHOICES = [
+        ('FINANCIERO', _('Financiero')),
+        ('TECNICO', _('Técnico / operativo')),
+        ('LEGAL', _('Legal / regulatorio')),
+        ('SOCIAL', _('Social')),
+        ('AMBIENTAL', _('Ambiental')),
+        ('POLITICO', _('Político / institucional')),
+    ]
+    ESCALA_CHOICES = [
+        (1, _('Baja')),
+        (2, _('Media')),
+        (3, _('Alta')),
+    ]
+    proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='matriz_riesgos')
+    descripcion = models.CharField(_('Riesgo'), max_length=255)
+    tipo = models.CharField(_('Tipo'), max_length=20, choices=TIPO_CHOICES)
+    probabilidad = models.PositiveSmallIntegerField(_('Probabilidad'), choices=ESCALA_CHOICES, default=2)
+    impacto = models.PositiveSmallIntegerField(_('Impacto'), choices=ESCALA_CHOICES, default=2)
+    mitigacion = models.TextField(_('Medida de mitigación'), blank=True)
+    responsable = models.CharField(_('Responsable'), max_length=150, blank=True)
+
+    @property
+    def nivel(self):
+        return self.probabilidad * self.impacto
+
+    @property
+    def nivel_label(self):
+        if self.nivel >= 6:
+            return _('Alto')
+        if self.nivel >= 3:
+            return _('Medio')
+        return _('Bajo')
+
+    def __str__(self):
+        return self.descripcion

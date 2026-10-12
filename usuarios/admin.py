@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Perfil
+from .models import Perfil, Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
 
 @admin.register(Perfil)
 class PerfilAdmin(admin.ModelAdmin):
@@ -15,3 +15,31 @@ class PerfilAdmin(admin.ModelAdmin):
     def get_apellido(self, obj):
         return obj.usuario.last_name
     get_apellido.short_description = 'Apellido'
+
+
+class DocumentoSoporteInline(admin.TabularInline):
+    model = DocumentoSoporte
+    extra = 0
+
+
+class ActividadCronogramaInline(admin.TabularInline):
+    model = ActividadCronograma
+    extra = 0
+
+
+class RubroPresupuestoInline(admin.TabularInline):
+    model = RubroPresupuesto
+    extra = 0
+
+
+class RiesgoProyectoInline(admin.TabularInline):
+    model = RiesgoProyecto
+    extra = 0
+
+
+@admin.register(Proyecto)
+class ProyectoAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'usuario', 'categoria', 'pais', 'fecha_inicio', 'fecha_fin', 'presupuesto', 'fecha_creacion')
+    list_filter = ('pais', 'categoria')
+    search_fields = ('nombre', 'descripcion')
+    inlines = [ActividadCronogramaInline, RubroPresupuestoInline, RiesgoProyectoInline, DocumentoSoporteInline]

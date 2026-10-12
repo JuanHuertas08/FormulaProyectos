@@ -1,0 +1,11 @@
+{% load i18n %}
+<tr class="fila-formset align-top border-b {% if f.DELETE.value %}hidden{% endif %}" data-formset="rubros">
+    <td class="p-1">{{ f.id }}{{ f.rubro }}{% for e in f.rubro.errors %}<p class="text-red-500 text-[11px]">{{ e }}</p>{% endfor %}</td>
+    <td class="p-1">{{ f.descripcion }}</td>
+    <td class="p-1">{{ f.fuente }}{% for e in f.fuente.errors %}<p class="text-red-500 text-[11px]">{{ e }}</p>{% endfor %}</td>
+    <td class="p-1">{{ f.monto }}{% for e in f.monto.errors %}<p class="text-red-500 text-[11px]">{{ e }}</p>{% endfor %}</td>
+    <td class="p-1 text-center">
+        <span class="hidden">{{ f.DELETE }}</span>
+        <button type="button" onclick="eliminarFila(this)" class="text-gray-400 hover:text-red-600 p-2" title="{% trans 'Eliminar' %}">&#10005;</button>
+    </td>
+</tr>

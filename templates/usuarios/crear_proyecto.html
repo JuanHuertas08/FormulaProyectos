@@ -61,7 +61,7 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-            <form id="wizardForm" method="POST">
+            <form id="wizardForm" method="POST" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
 
 
@@ -274,40 +274,153 @@
 </div>
 
                 <div class="wizard-step" id="step-3">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 3: Cronograma" %}</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Inicio" %}</label>
-                            <p class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" id="resumen-fecha-inicio">—</p>
-                            <p class="text-xs text-gray-400 mt-1">{% trans "Definida en el Paso 1." %}</p>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 3: Cronograma" %}</h2>
+                    <div class="space-y-6">
+                        <div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-blue-800 mb-4 flex items-center">
+                                <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">A</span>
+                                {% trans "Horizonte del Proyecto" %}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Inicio" %}</label>
+                                    <p class="w-full p-3 border rounded-lg bg-gray-50 text-gray-500" id="resumen-fecha-inicio">—</p>
+                                    <p class="text-xs text-gray-400 mt-1">{% trans "Definida en el Paso 1." %}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Finalización" %}</label>
+                                    {{ form.fecha_fin }}
+                                    {% if form.fecha_fin.errors %}<p class="text-red-500 text-xs">{{ form.fecha_fin.errors.0 }}</p>{% endif %}
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Duración" %}</label>
+                                    <p class="w-full p-3 border rounded-lg bg-gray-50 font-bold text-gray-700" id="duracion-proyecto">—</p>
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Fecha de Finalización" %}</label>
-                            {{ form.fecha_fin }}
-                            {% if form.fecha_fin.errors %}<p class="text-red-500 text-xs">{{ form.fecha_fin.errors.0 }}</p>{% endif %}
+
+                        <div class="bg-orange-50/50 p-6 rounded-xl border border-orange-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-orange-800 mb-1 flex items-center">
+                                <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">B</span>
+                                {% trans "Actividades e Hitos" %}
+                            </h3>
+                            <p class="text-xs text-gray-500 mb-4">{% trans "Las actividades deben quedar dentro del rango de fechas del proyecto. Un hito es un punto de control con un entregable." %}</p>
+                            {{ actividades.management_form }}
+                            {% for e in actividades.non_form_errors %}<p class="text-red-500 text-xs">{{ e }}</p>{% endfor %}
+                            <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                                <table class="w-full min-w-[900px] text-sm">
+                                    <thead class="bg-gray-50 text-[10px] uppercase text-gray-500">
+                                        <tr>
+                                            <th class="p-2 text-left w-28">{% trans "Tipo" %}</th>
+                                            <th class="p-2 text-left min-w-[200px]">{% trans "Actividad" %}</th>
+                                            <th class="p-2 text-left w-36">{% trans "Responsable" %}</th>
+                                            <th class="p-2 text-left w-36">{% trans "Inicio" %}</th>
+                                            <th class="p-2 text-left w-36">{% trans "Fin" %}</th>
+                                            <th class="p-2 text-left w-40">{% trans "Entregable" %}</th>
+                                            <th class="w-10"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filas-actividades">
+                                        {% for f in actividades %}{% include "usuarios/parciales/fila_actividad.html" %}{% endfor %}
+                                    </tbody>
+                                </table>
+                                <p class="tabla-vacia text-center text-xs text-gray-400 italic p-4" data-para="actividades">{% trans "Aún no hay actividades registradas." %}</p>
+                            </div>
+                            <template id="plantilla-actividades">{% with f=actividades.empty_form %}{% include "usuarios/parciales/fila_actividad.html" %}{% endwith %}</template>
+                            <button type="button" onclick="agregarFila('actividades')" class="mt-3 px-4 py-2 text-sm font-bold text-[#7c2d12] border border-[#c2410c]/40 rounded-lg hover:bg-orange-50 transition">+ {% trans "Agregar actividad" %}</button>
+
+                            <div id="gantt-wrap" class="hidden mt-6">
+                                <p class="text-xs font-bold text-gray-500 uppercase mb-2">{% trans "Vista de línea de tiempo" %}</p>
+                                <div id="gantt" class="space-y-1.5 bg-white p-4 rounded-lg border border-gray-200"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="wizard-step" id="step-4">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 4: Recursos" %}</h2>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Presupuesto Estimado (USD)" %}</label>
-                    {{ form.presupuesto }}
-                    {% if form.presupuesto.errors %}<p class="text-red-500 text-xs">{{ form.presupuesto.errors.0 }}</p>{% endif %}
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 4: Recursos" %}</h2>
+                    <div class="space-y-6">
+                        <div class="bg-orange-50/50 p-6 rounded-xl border border-orange-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-orange-800 mb-1 flex items-center">
+                                <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">A</span>
+                                {% trans "Presupuesto por Rubro" %}
+                            </h3>
+                            <p class="text-xs text-gray-500 mb-4">{% trans "Registra cada línea de gasto con su fuente de financiamiento. El total se calcula automáticamente." %}</p>
+                            {{ rubros.management_form }}
+                            {% for e in rubros.non_form_errors %}<p class="text-red-500 text-xs">{{ e }}</p>{% endfor %}
+                            <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+                                <table class="w-full min-w-[680px] text-sm">
+                                    <thead class="bg-gray-50 text-[10px] uppercase text-gray-500">
+                                        <tr>
+                                            <th class="p-2 text-left w-48">{% trans "Rubro" %}</th>
+                                            <th class="p-2 text-left">{% trans "Descripción" %}</th>
+                                            <th class="p-2 text-left w-48">{% trans "Fuente" %}</th>
+                                            <th class="p-2 text-right w-36">{% trans "Monto (USD)" %}</th>
+                                            <th class="w-10"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filas-rubros">
+                                        {% for f in rubros %}{% include "usuarios/parciales/fila_rubro.html" %}{% endfor %}
+                                    </tbody>
+                                </table>
+                                <p class="tabla-vacia text-center text-xs text-gray-400 italic p-4" data-para="rubros">{% trans "Aún no hay rubros registrados." %}</p>
+                            </div>
+                            <template id="plantilla-rubros">{% with f=rubros.empty_form %}{% include "usuarios/parciales/fila_rubro.html" %}{% endwith %}</template>
+                            <button type="button" onclick="agregarFila('rubros')" class="mt-3 px-4 py-2 text-sm font-bold text-[#7c2d12] border border-[#c2410c]/40 rounded-lg hover:bg-orange-50 transition">+ {% trans "Agregar rubro" %}</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Presupuesto Total (USD)" %}</label>
+                                {{ form.presupuesto }}
+                                {% if form.presupuesto.errors %}<p class="text-red-500 text-xs">{{ form.presupuesto.errors.0 }}</p>{% endif %}
+                            </div>
+                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <p class="text-sm font-semibold text-gray-700 mb-3">{% trans "Distribución por fuente de financiamiento" %}</p>
+                                <div id="resumen-fuentes" class="space-y-2 text-sm"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="wizard-step" id="step-5">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">{% trans "Paso 5: Riesgos" %}</h2>
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Identificación de Riesgos" %}</label>
-                    {{ form.riesgos }}
-                    {% if form.riesgos.errors %}<p class="text-red-500 text-xs">{{ form.riesgos.errors.0 }}</p>{% endif %}
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">{% trans "Paso 5: Riesgos" %}</h2>
+                    <div class="space-y-6">
+                        <div class="bg-red-50/40 p-6 rounded-xl border border-red-100 shadow-sm">
+                            <h3 class="text-lg font-semibold text-red-800 mb-1 flex items-center">
+                                <span class="bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">A</span>
+                                {% trans "Matriz de Riesgos" %}
+                            </h3>
+                            <p class="text-xs text-gray-500 mb-4">{% trans "El nivel de cada riesgo se calcula como probabilidad × impacto: Bajo (1–2), Medio (3–4), Alto (6–9)." %}</p>
+                            {{ riesgos.management_form }}
+                            {% for e in riesgos.non_form_errors %}<p class="text-red-500 text-xs">{{ e }}</p>{% endfor %}
+                            <div id="filas-riesgos_matriz" class="space-y-3">
+                                {% for f in riesgos %}{% include "usuarios/parciales/fila_riesgo.html" %}{% endfor %}
+                            </div>
+                            <p class="tabla-vacia text-center text-xs text-gray-400 italic p-4 bg-white rounded-lg border border-gray-200" data-para="riesgos_matriz">{% trans "Aún no hay riesgos registrados." %}</p>
+                            <template id="plantilla-riesgos_matriz">{% with f=riesgos.empty_form %}{% include "usuarios/parciales/fila_riesgo.html" %}{% endwith %}</template>
+                            <button type="button" onclick="agregarFila('riesgos_matriz')" class="mt-3 px-4 py-2 text-sm font-bold text-[#7c2d12] border border-[#c2410c]/40 rounded-lg hover:bg-orange-50 transition">+ {% trans "Agregar riesgo" %}</button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <p class="text-sm font-semibold text-gray-700 mb-3">{% trans "Resumen por nivel" %}</p>
+                                <div id="resumen-niveles" class="space-y-2 text-sm"></div>
+                            </div>
+                            <div class="md:col-span-2 bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">{% trans "Observaciones generales sobre riesgos" %}</label>
+                                {{ form.riesgos }}
+                                {% if form.riesgos.errors %}<p class="text-red-500 text-xs">{{ form.riesgos.errors.0 }}</p>{% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="wizard-step" id="step-6">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-4 text-green-600">{% trans "Paso 6: Revisión Final" %}</h2>
-                    <div id="resumen-final" class="bg-gray-50 p-6 rounded-xl space-y-2 text-gray-700 border-dashed border-2">
-                        <p>{% trans 'Haz clic en "Guardar" para registrar formalmente el proyecto.' %}</p>
-                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2 border-b pb-2">{% trans "Paso 6: Revisión Final" %}</h2>
+                    <p class="text-sm text-gray-500 mb-6">{% trans 'Revisa la información de cada paso. Puedes volver a editar cualquier sección antes de hacer clic en "Guardar Proyecto".' %}</p>
+                    <div id="alertas-revision" class="mb-6"></div>
+                    <div id="resumen-final" class="space-y-4"></div>
                 </div>
 
                 <div class="flex justify-between mt-10 pt-6 border-t">
@@ -325,13 +438,13 @@
         </div>
     </main>
 
+{{ leyes_seleccionadas|json_script:"leyes-seleccionadas" }}
 <script>
     const I18N = {
         sinDefinir: "{% trans 'Sin definir aún' %}",
         noHayNormas: "{% trans 'No hay normas registradas.' %}",
         errorCargandoLeyes: "{% trans 'Error cargando leyes:' %}",
         ingresaNombre: "{% trans 'Por favor, ingresa el nombre del proyecto' %}",
-        na: "{% trans 'N/A' %}",
         noDefinida: "{% trans 'No definida' %}",
         proyecto: "{% trans 'Proyecto' %}",
         categoriaLbl: "{% trans 'Categoría' %}",
@@ -343,27 +456,101 @@
         diagSeleccionaPais: "{% trans 'Selecciona primero el país del proyecto.' %}",
         diagBuscando: "{% trans 'Buscando en fuentes oficiales...' %}",
         diagListo: "{% trans 'Información cargada. Puedes editarla o ampliarla.' %}",
-        diagError: "{% trans 'No se pudo completar la búsqueda.' %}"
+        diagError: "{% trans 'No se pudo completar la búsqueda.' %}",
+        seleccionaCategoria: "{% trans 'Selecciona la categoría del proyecto.' %}",
+        ingresaFechaInicio: "{% trans 'Ingresa la fecha de inicio del proyecto.' %}",
+        seleccionaPais: "{% trans 'Selecciona el país donde se ejecutará el proyecto.' %}",
+        finAntesInicio: "{% trans 'La fecha de finalización no puede ser anterior a la fecha de inicio.' %}",
+        actividadIncompleta: "{% trans 'Cada actividad necesita nombre, fecha de inicio y fecha de fin.' %}",
+        actividadFechas: "{% trans 'El fin de la actividad no puede ser anterior a su inicio.' %}",
+        actividadFueraRango: "{% trans 'Hay actividades fuera del rango de fechas del proyecto.' %}",
+        rubroIncompleto: "{% trans 'Cada rubro necesita tipo, fuente y un monto mayor que cero.' %}",
+        riesgoIncompleto: "{% trans 'Cada riesgo necesita descripción y tipo.' %}",
+        meses: "{% trans 'meses' %}",
+        dias: "{% trans 'días' %}",
+        sinDatos: "{% trans 'Sin datos' %}",
+        nivelAlto: "{% trans 'Alto' %}",
+        nivelMedio: "{% trans 'Medio' %}",
+        nivelBajo: "{% trans 'Bajo' %}",
+        nivel: "{% trans 'Nivel' %}",
+        editar: "{% trans 'Editar' %}",
+        tituloIdentificacion: "{% trans 'Identificación y Viabilidad' %}",
+        tituloDiagnostico: "{% trans 'Diagnóstico del Contexto' %}",
+        tituloCronograma: "{% trans 'Cronograma' %}",
+        tituloRecursos: "{% trans 'Recursos' %}",
+        tituloRiesgos: "{% trans 'Riesgos' %}",
+        descripcionLbl: "{% trans 'Descripción' %}",
+        odsLbl: "{% trans 'ODS seleccionados' %}",
+        normasLbl: "{% trans 'Normas seleccionadas' %}",
+        documentosLbl: "{% trans 'Documentos de soporte' %}",
+        cifrasLbl: "{% trans 'Cifras y datos estadísticos' %}",
+        antecedentesLbl: "{% trans 'Antecedentes (últimos 5 años)' %}",
+        necesidadesLbl: "{% trans 'Necesidades y desafíos' %}",
+        completado: "{% trans 'Completado' %}",
+        vacio: "{% trans 'Vacío' %}",
+        duracionLbl: "{% trans 'Duración' %}",
+        actividadesLbl: "{% trans 'Actividades' %}",
+        hitosLbl: "{% trans 'Hitos' %}",
+        rubrosLbl: "{% trans 'Rubros' %}",
+        porFuenteLbl: "{% trans 'Por fuente' %}",
+        riesgosLbl: "{% trans 'Riesgos identificados' %}",
+        alertaTitulo: "{% trans 'Recomendaciones antes de guardar (no impiden guardar):' %}",
+        alertaSinFin: "{% trans 'No se definió la fecha de finalización del proyecto.' %}",
+        alertaSinActividades: "{% trans 'El cronograma no tiene actividades.' %}",
+        alertaSinRubros: "{% trans 'El presupuesto no tiene rubros.' %}",
+        alertaSinRiesgos: "{% trans 'No se identificaron riesgos.' %}",
+        alertaSinDiagnostico: "{% trans 'El diagnóstico del contexto está vacío.' %}",
+        alertaAltosSinMitigacion: "{% trans 'Hay riesgos de nivel alto sin medida de mitigación.' %}",
+        listoGuardar: "{% trans 'Todo listo. Revisa el resumen y guarda el proyecto.' %}"
     };
 
-    let currentStep = 1;
+    const LOCALE = "{{ LANGUAGE_CODE }}";
     const totalSteps = 6;
+    let currentStep = {{ paso_inicial|default:1 }};
+    const form = document.getElementById('wizardForm');
 
-    // --- 0. REFLEJAR FECHA DE INICIO (Paso 1) EN EL RESUMEN DEL PASO 3 ---
-    const fechaInicioInput = document.querySelector('[name="fecha_inicio"]');
-    const resumenFechaInicio = document.getElementById('resumen-fecha-inicio');
-    function sincronizarFechaInicio() {
-        if (fechaInicioInput && resumenFechaInicio) {
-            resumenFechaInicio.textContent = fechaInicioInput.value || I18N.sinDefinir;
+    // --- Utilidades ---
+    function esc(texto) {
+        const div = document.createElement('div');
+        div.textContent = texto == null ? '' : String(texto);
+        return div.innerHTML;
+    }
+    function campo(nombre) { return form.querySelector(`[name="${nombre}"]`); }
+    function valor(nombre) { const el = campo(nombre); return el ? el.value.trim() : ''; }
+    function textoSeleccion(el) {
+        return el && el.selectedIndex >= 0 && el.value ? el.options[el.selectedIndex].text : '';
+    }
+    function aFecha(v) { return v ? new Date(v + 'T00:00:00') : null; }
+    function formatoFecha(v) {
+        const d = aFecha(v);
+        return d ? d.toLocaleDateString(LOCALE, { day: '2-digit', month: 'short', year: 'numeric' }) : I18N.noDefinida;
+    }
+    const formatoUSD = new Intl.NumberFormat(LOCALE, { style: 'currency', currency: 'USD' });
+
+    // --- 0. FECHA DE INICIO (Paso 1) Y DURACIÓN EN EL PASO 3 ---
+    const fechaInicioInput = campo('fecha_inicio');
+    const fechaFinInput = campo('fecha_fin');
+    function sincronizarFechas() {
+        const resumenInicio = document.getElementById('resumen-fecha-inicio');
+        if (resumenInicio) resumenInicio.textContent = fechaInicioInput.value ? formatoFecha(fechaInicioInput.value) : I18N.sinDefinir;
+        if (fechaFinInput) fechaFinInput.min = fechaInicioInput.value || '';
+
+        const duracion = document.getElementById('duracion-proyecto');
+        const ini = aFecha(fechaInicioInput.value), fin = aFecha(fechaFinInput.value);
+        if (duracion) {
+            if (ini && fin && fin >= ini) {
+                const dias = Math.round((fin - ini) / 86400000) + 1;
+                duracion.textContent = `${(dias / 30.44).toFixed(1)} ${I18N.meses} (${dias} ${I18N.dias})`;
+            } else {
+                duracion.textContent = '—';
+            }
         }
+        dibujarGantt();
     }
-    if (fechaInicioInput) {
-        fechaInicioInput.addEventListener('change', sincronizarFechaInicio);
-        sincronizarFechaInicio();
-    }
+    [fechaInicioInput, fechaFinInput].forEach(el => el && el.addEventListener('change', sincronizarFechas));
 
     // --- 0.b CONTADOR DE CARACTERES DE LA DESCRIPCIÓN (mínimo 50) ---
-    const descripcionInput = document.querySelector('[name="descripcion"]');
+    const descripcionInput = campo('descripcion');
     const contadorDescripcion = document.getElementById('contador-descripcion');
     function sincronizarContadorDescripcion() {
         if (!descripcionInput || !contadorDescripcion) return;
@@ -377,119 +564,295 @@
         sincronizarContadorDescripcion();
     }
 
-    // --- 1. LÓGICA DINÁMICA DE PAÍS Y LEYES (UNIFICADA) ---
-    const paisSelector = document.querySelector('[name="pais"]');
+    // --- 1. LÓGICA DINÁMICA DE PAÍS Y LEYES ---
+    const paisSelector = campo('pais');
+    function cargarLeyes(pais, seleccionadas) {
+        const leyesDiv = document.getElementById('seccion-leyes');
+        const descDiv = document.getElementById('seccion-descripcion');
+        if (!pais) {
+            if (leyesDiv) leyesDiv.classList.add('hidden');
+            if (descDiv) descDiv.classList.add('hidden');
+            return;
+        }
+        fetch(`{% url 'obtener_leyes' %}?pais=${encodeURIComponent(pais)}`)
+            .then(response => response.json())
+            .then(data => {
+                const llenarGrupo = (id, lista) => {
+                    const container = document.getElementById(id);
+                    if (!container) return;
+                    container.innerHTML = '';
+                    if (lista && lista.length > 0) {
+                        lista.forEach(ley => {
+                            const marcada = seleccionadas.includes(ley) ? 'checked' : '';
+                            container.innerHTML += `
+                                <label class="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                                    <input type="checkbox" name="leyes" value="${esc(ley)}" ${marcada} class="mr-2 h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
+                                    <span class="text-sm text-gray-700">${esc(ley)}</span>
+                                </label>`;
+                        });
+                    } else {
+                        container.innerHTML = `<p class="text-xs text-gray-400 italic">${I18N.noHayNormas}</p>`;
+                    }
+                };
+                llenarGrupo('grupo-politica', data.politica);
+                llenarGrupo('grupo-resolucion', data.resolucion);
+                llenarGrupo('grupo-decretos', data.decretos);
+                llenarGrupo('grupo-otras', data.otras);
+                if (leyesDiv) leyesDiv.classList.remove('hidden');
+                if (descDiv) descDiv.classList.remove('hidden');
+            })
+            .catch(error => console.error(I18N.errorCargandoLeyes, error));
+    }
     if (paisSelector) {
-        paisSelector.addEventListener('change', function(e) {
-            const pais = e.target.value;
-            const leyesDiv = document.getElementById('seccion-leyes');
-            const descDiv = document.getElementById('seccion-descripcion');
+        paisSelector.addEventListener('change', e => cargarLeyes(e.target.value, []));
+        // Si el formulario vuelve con errores, recargar las normas conservando la selección
+        if (paisSelector.value) cargarLeyes(paisSelector.value, JSON.parse(document.getElementById('leyes-seleccionadas').textContent));
+    }
 
-            if (!pais) {
-                if(leyesDiv) leyesDiv.classList.add('hidden');
-                if(descDiv) descDiv.classList.add('hidden');
-                return;
-            }
+    // --- 2. FILAS DINÁMICAS (formsets de los pasos 3, 4 y 5) ---
+    function filasVigentes(prefijo) {
+        return Array.from(document.querySelectorAll(`#filas-${prefijo} .fila-formset`))
+            .filter(fila => !fila.classList.contains('hidden'));
+    }
+    function celda(fila, nombre) { return fila.querySelector(`[name$="-${nombre}"]`); }
+    function filaVacia(fila) {
+        return Array.from(fila.querySelectorAll('input[type=text], input[type=date], input[type=number], textarea'))
+            .every(el => !el.value.trim())
+            && Array.from(fila.querySelectorAll('select'))
+                .filter(s => s.options.length && s.options[0].value === '')
+                .every(s => !s.value);
+    }
+    function filasConDatos(prefijo) { return filasVigentes(prefijo).filter(f => !filaVacia(f)); }
 
-            // Llamada a la API de Django
-            fetch(`/usuarios/api/leyes/?pais=${pais}`)
-                .then(response => response.json())
-                .then(data => {
-                    const llenarGrupo = (id, lista) => {
-                        const container = document.getElementById(id);
-                        if (!container) return;
-                        container.innerHTML = '';
-                        if (lista && lista.length > 0) {
-                            lista.forEach(ley => {
-                                container.innerHTML += `
-                                    <label class="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
-                                        <input type="checkbox" name="leyes" value="${ley}" class="mr-2 h-4 w-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500">
-                                        <span class="text-sm text-gray-700">${ley}</span>
-                                    </label>`;
-                            });
-                        } else {
-                            container.innerHTML = `<p class="text-xs text-gray-400 italic">${I18N.noHayNormas}</p>`;
-                        }
-                    };
-
-                    llenarGrupo('grupo-politica', data.politica);
-                    llenarGrupo('grupo-resolucion', data.resolucion);
-                    llenarGrupo('grupo-decretos', data.decretos);
-                    llenarGrupo('grupo-otras', data.otras);
-
-                    // Mostrar secciones
-                    if(leyesDiv) leyesDiv.classList.remove('hidden');
-                    if(descDiv) descDiv.classList.remove('hidden');
-                })
-                .catch(error => console.error(I18N.errorCargandoLeyes, error));
+    function actualizarVacios() {
+        document.querySelectorAll('.tabla-vacia').forEach(p => {
+            p.classList.toggle('hidden', filasVigentes(p.dataset.para).length > 0);
         });
     }
 
-    // --- 2. NAVEGACIÓN DEL WIZARD ---
-    function showStep(n) {
-        let steps = document.getElementsByClassName("wizard-step");
-        let indicators = document.getElementsByClassName("step-indicator");
+    function agregarFila(prefijo) {
+        const total = document.getElementById(`id_${prefijo}-TOTAL_FORMS`);
+        const plantilla = document.getElementById(`plantilla-${prefijo}`);
+        const indice = parseInt(total.value, 10);
+        const contenedor = document.getElementById(`filas-${prefijo}`);
+        contenedor.insertAdjacentHTML('beforeend', plantilla.innerHTML.replace(/__prefix__/g, indice));
+        total.value = indice + 1;
+        const fila = contenedor.lastElementChild;
+        if (prefijo === 'actividades') {
+            // Sugerir las fechas del proyecto como rango por defecto
+            if (fechaInicioInput.value) celda(fila, 'fecha_inicio').value = fechaInicioInput.value;
+            if (fechaFinInput.value) celda(fila, 'fecha_fin').value = fechaFinInput.value;
+        }
+        refrescarCalculos();
+        const primero = fila.querySelector('input[type=text], select');
+        if (primero) primero.focus();
+    }
 
-        // Ocultar todos los pasos y limpiar indicadores
+    function eliminarFila(boton) {
+        const fila = boton.closest('.fila-formset');
+        const borrar = fila.querySelector('input[name$="-DELETE"]');
+        if (borrar) borrar.checked = true;
+        fila.classList.add('hidden');
+        refrescarCalculos();
+    }
+
+    // --- 2.b CÁLCULOS EN VIVO ---
+    function dibujarGantt() {
+        const wrap = document.getElementById('gantt-wrap');
+        const gantt = document.getElementById('gantt');
+        if (!wrap || !gantt) return;
+        const filas = filasConDatos('actividades')
+            .map(f => ({
+                nombre: celda(f, 'nombre').value.trim(),
+                hito: celda(f, 'tipo').value === 'HITO',
+                ini: aFecha(celda(f, 'fecha_inicio').value),
+                fin: aFecha(celda(f, 'fecha_fin').value),
+            }))
+            .filter(a => a.ini && a.fin && a.fin >= a.ini);
+        if (!filas.length) { wrap.classList.add('hidden'); return; }
+
+        const pIni = aFecha(fechaInicioInput.value), pFin = aFecha(fechaFinInput.value);
+        const min = new Date(Math.min(...filas.map(a => a.ini), ...(pIni ? [pIni] : [])));
+        const max = new Date(Math.max(...filas.map(a => a.fin), ...(pFin ? [pFin] : [])));
+        const rango = Math.max(max - min, 86400000);
+
+        gantt.innerHTML = filas.map(a => {
+            const izq = ((a.ini - min) / rango) * 100;
+            const ancho = Math.max(((a.fin - a.ini) / rango) * 100, 1.5);
+            const fuera = (pIni && a.ini < pIni) || (pFin && a.fin > pFin);
+            const color = fuera ? 'bg-red-500' : (a.hito ? 'bg-amber-500' : 'bg-gradient-to-r from-[#7c2d12] to-[#c2410c]');
+            const barra = a.hito
+                ? `<div class="absolute top-1/2 w-3 h-3 rotate-45 ${color}" style="left:calc(${izq + ancho}% - 6px);transform:translateY(-50%) rotate(45deg)"></div>`
+                : `<div class="absolute top-1 bottom-1 rounded ${color}" style="left:${izq}%;width:${ancho}%"></div>`;
+            return `<div class="flex items-center gap-3 text-xs">
+                        <span class="w-40 truncate text-gray-600" title="${esc(a.nombre)}">${esc(a.nombre || '—')}</span>
+                        <div class="relative flex-1 h-5 bg-gray-100 rounded">${barra}</div>
+                    </div>`;
+        }).join('') + `<div class="flex justify-between text-[10px] text-gray-400 pl-[10.75rem]">
+                            <span>${formatoFecha(min.toISOString().slice(0, 10))}</span>
+                            <span>${formatoFecha(max.toISOString().slice(0, 10))}</span>
+                       </div>`;
+        wrap.classList.remove('hidden');
+    }
+
+    function calcularPresupuesto() {
+        const porFuente = {};
+        let total = 0;
+        filasConDatos('rubros').forEach(f => {
+            const monto = parseFloat(celda(f, 'monto').value) || 0;
+            if (monto <= 0) return;
+            total += monto;
+            const fuente = textoSeleccion(celda(f, 'fuente')) || I18N.noDefinida;
+            porFuente[fuente] = (porFuente[fuente] || 0) + monto;
+        });
+        const presupuesto = campo('presupuesto');
+        if (presupuesto) presupuesto.value = total ? total.toFixed(2) : '';
+
+        const resumen = document.getElementById('resumen-fuentes');
+        if (resumen) {
+            const entradas = Object.entries(porFuente).sort((a, b) => b[1] - a[1]);
+            resumen.innerHTML = entradas.length ? entradas.map(([fuente, monto]) => {
+                const pct = (monto / total) * 100;
+                return `<div>
+                            <div class="flex justify-between"><span class="text-gray-600">${esc(fuente)}</span><span class="font-semibold">${formatoUSD.format(monto)} · ${pct.toFixed(0)}%</span></div>
+                            <div class="h-1.5 bg-gray-100 rounded mt-1"><div class="h-1.5 rounded bg-[#c2410c]" style="width:${pct}%"></div></div>
+                        </div>`;
+            }).join('') : `<p class="text-xs text-gray-400 italic">${I18N.sinDatos}</p>`;
+        }
+        return { total, porFuente };
+    }
+
+    function nivelRiesgo(p, i) {
+        const n = p * i;
+        if (n >= 6) return { n, etiqueta: I18N.nivelAlto, clase: 'bg-red-100 text-red-700' };
+        if (n >= 3) return { n, etiqueta: I18N.nivelMedio, clase: 'bg-amber-100 text-amber-700' };
+        return { n, etiqueta: I18N.nivelBajo, clase: 'bg-emerald-100 text-emerald-700' };
+    }
+
+    function calcularRiesgos() {
+        const conteo = { [I18N.nivelAlto]: 0, [I18N.nivelMedio]: 0, [I18N.nivelBajo]: 0 };
+        let altosSinMitigacion = 0;
+        filasVigentes('riesgos_matriz').forEach(f => {
+            const nv = nivelRiesgo(parseInt(celda(f, 'probabilidad').value, 10) || 0, parseInt(celda(f, 'impacto').value, 10) || 0);
+            const badge = f.querySelector('.nivel-riesgo');
+            if (badge) {
+                badge.className = `nivel-riesgo w-full text-center text-xs font-bold px-3 py-2.5 rounded-lg ${nv.clase}`;
+                badge.textContent = `${I18N.nivel}: ${nv.etiqueta} (${nv.n})`;
+            }
+            if (filaVacia(f)) return;
+            conteo[nv.etiqueta]++;
+            if (nv.etiqueta === I18N.nivelAlto && !celda(f, 'mitigacion').value.trim()) altosSinMitigacion++;
+        });
+        const resumen = document.getElementById('resumen-niveles');
+        if (resumen) {
+            const clases = { [I18N.nivelAlto]: 'bg-red-500', [I18N.nivelMedio]: 'bg-amber-500', [I18N.nivelBajo]: 'bg-emerald-500' };
+            resumen.innerHTML = Object.entries(conteo).map(([nivel, n]) =>
+                `<div class="flex items-center justify-between"><span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full ${clases[nivel]}"></span>${nivel}</span><span class="font-bold">${n}</span></div>`
+            ).join('');
+        }
+        return { conteo, altosSinMitigacion };
+    }
+
+    function refrescarCalculos() {
+        actualizarVacios();
+        dibujarGantt();
+        calcularPresupuesto();
+        calcularRiesgos();
+    }
+    form.addEventListener('input', e => { if (e.target.closest('.fila-formset')) refrescarCalculos(); });
+    form.addEventListener('change', e => { if (e.target.closest('.fila-formset')) refrescarCalculos(); });
+
+    // --- 3. NAVEGACIÓN DEL WIZARD ---
+    function showStep(n) {
+        const steps = document.getElementsByClassName('wizard-step');
+        const indicators = document.getElementsByClassName('step-indicator');
         for (let i = 0; i < steps.length; i++) {
-            steps[i].style.display = "none"; // Usamos display para asegurar visibilidad
-            steps[i].classList.remove("active");
+            steps[i].style.setProperty('display', 'none', 'important');
+            steps[i].classList.remove('active');
             if (indicators[i]) {
-                indicators[i].classList.remove("active", "completed");
-                if (i < n - 1) indicators[i].classList.add("completed");
+                indicators[i].classList.remove('active', 'completed');
+                if (i < n - 1) indicators[i].classList.add('completed');
             }
         }
-
-        // Mostrar paso actual
-        if (steps[n - 1]) {
-            steps[n - 1].style.display = "block";
-            steps[n - 1].classList.add("active");
+        const actual = document.getElementById(`step-${n}`);
+        if (actual) {
+            actual.style.setProperty('display', 'block', 'important');
+            actual.classList.add('active');
         }
+        if (indicators[n - 1]) indicators[n - 1].classList.add('active');
 
-        if (indicators[n - 1]) {
-            indicators[n - 1].classList.add("active");
-        }
-
-        // Control de botones
-        const prevBtn = document.getElementById("prevBtn");
-        const nextBtn = document.getElementById("nextBtn");
-        const submitBtn = document.getElementById("submitBtn");
-
-        if(prevBtn) prevBtn.style.display = (n === 1) ? "none" : "inline";
-
-        if (n === totalSteps) {
-            if(nextBtn) nextBtn.style.display = "none";
-            if(submitBtn) submitBtn.style.display = "inline";
-            generarResumen();
-        } else {
-            if(nextBtn) nextBtn.style.display = "inline";
-            if(submitBtn) submitBtn.style.display = "none";
-        }
+        document.getElementById('prevBtn').style.display = (n === 1) ? 'none' : 'inline';
+        document.getElementById('nextBtn').style.display = (n === totalSteps) ? 'none' : 'inline';
+        document.getElementById('submitBtn').style.display = (n === totalSteps) ? 'inline' : 'none';
+        if (n === totalSteps) generarResumen();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function nextPrev(n) {
-        if (n === 1 && !validarPaso()) return false;
+        if (n === 1 && !validarPaso(currentStep)) return false;
         currentStep += n;
         showStep(currentStep);
     }
 
-    // --- 3. VALIDACIÓN Y RESUMEN ---
-    function validarPaso() {
-        if (currentStep === 1) {
-            let nombreInput = document.getElementsByName("nombre")[0];
-            if (nombreInput && nombreInput.value.trim() === "") {
-                alert(I18N.ingresaNombre);
-                return false;
+    function irAPaso(n) {
+        currentStep = n;
+        showStep(currentStep);
+    }
+
+    // --- 4. VALIDACIÓN POR PASO (el servidor vuelve a validar todo al guardar) ---
+    function marcar(el) {
+        if (!el) return;
+        el.classList.add('border-red-500', 'ring-1', 'ring-red-400');
+        el.addEventListener('input', () => el.classList.remove('border-red-500', 'ring-1', 'ring-red-400'), { once: true });
+        el.addEventListener('change', () => el.classList.remove('border-red-500', 'ring-1', 'ring-red-400'), { once: true });
+    }
+    function fallo(el, mensaje) { marcar(el); alert(mensaje); if (el) el.focus(); return false; }
+
+    function validarPaso(paso) {
+        if (paso === 1) {
+            if (!valor('nombre')) return fallo(campo('nombre'), I18N.ingresaNombre);
+            if (!valor('categoria')) return fallo(campo('categoria'), I18N.seleccionaCategoria);
+            if (!valor('fecha_inicio')) return fallo(campo('fecha_inicio'), I18N.ingresaFechaInicio);
+            if (valor('descripcion').length < 50) return fallo(campo('descripcion'), I18N.descripcionMinima);
+            if (!valor('pais')) return fallo(campo('pais'), I18N.seleccionaPais);
+        }
+        if (paso === 3) {
+            const pIni = aFecha(valor('fecha_inicio')), pFin = aFecha(valor('fecha_fin'));
+            if (pIni && pFin && pFin < pIni) return fallo(fechaFinInput, I18N.finAntesInicio);
+            for (const f of filasConDatos('actividades')) {
+                const nombre = celda(f, 'nombre'), ini = celda(f, 'fecha_inicio'), fin = celda(f, 'fecha_fin');
+                if (!nombre.value.trim()) return fallo(nombre, I18N.actividadIncompleta);
+                if (!ini.value) return fallo(ini, I18N.actividadIncompleta);
+                if (!fin.value) return fallo(fin, I18N.actividadIncompleta);
+                if (aFecha(fin.value) < aFecha(ini.value)) return fallo(fin, I18N.actividadFechas);
+                if (pIni && aFecha(ini.value) < pIni) return fallo(ini, I18N.actividadFueraRango);
+                if (pFin && aFecha(fin.value) > pFin) return fallo(fin, I18N.actividadFueraRango);
             }
-            if (descripcionInput && descripcionInput.value.trim().length < 50) {
-                alert(I18N.descripcionMinima);
-                return false;
+        }
+        if (paso === 4) {
+            for (const f of filasConDatos('rubros')) {
+                for (const nombre of ['rubro', 'fuente']) {
+                    if (!celda(f, nombre).value) return fallo(celda(f, nombre), I18N.rubroIncompleto);
+                }
+                if (!(parseFloat(celda(f, 'monto').value) > 0)) return fallo(celda(f, 'monto'), I18N.rubroIncompleto);
+            }
+        }
+        if (paso === 5) {
+            for (const f of filasConDatos('riesgos_matriz')) {
+                if (!celda(f, 'descripcion').value.trim()) return fallo(celda(f, 'descripcion'), I18N.riesgoIncompleto);
+                if (!celda(f, 'tipo').value) return fallo(celda(f, 'tipo'), I18N.riesgoIncompleto);
             }
         }
         return true;
     }
 
-    // --- 3.b BÚSQUEDA DE DIAGNÓSTICO DEL PASO 2 (IA + fuentes oficiales) ---
+    form.addEventListener('submit', e => {
+        for (const paso of [1, 3, 4, 5]) {
+            if (!validarPaso(paso)) { e.preventDefault(); irAPaso(paso); return; }
+        }
+    });
+
+    // --- 5. BÚSQUEDA DE DIAGNÓSTICO DEL PASO 2 (IA + fuentes oficiales) ---
     function agregarContenido(id, textoNuevo) {
         if (!textoNuevo) return;
         const el = document.getElementById(id);
@@ -500,20 +863,17 @@
     function buscarDiagnostico() {
         const btn = document.getElementById('btnDiagnostico');
         const estado = document.getElementById('diagnostico-estado');
-        const paisEl = document.querySelector('[name="pais"]');
-        const categoriaEl = document.querySelector('[name="categoria"]');
-        const nombreEl = document.querySelector('[name="nombre"]');
-        const csrfEl = document.querySelector('[name="csrfmiddlewaretoken"]');
+        const csrfEl = campo('csrfmiddlewaretoken');
 
-        if (!paisEl || !paisEl.value) {
+        if (!valor('pais')) {
             estado.textContent = I18N.diagSeleccionaPais;
             return;
         }
 
         const datos = new URLSearchParams();
-        datos.append('pais', paisEl.value);
-        datos.append('categoria', categoriaEl ? categoriaEl.value : '');
-        datos.append('nombre', nombreEl ? nombreEl.value : '');
+        datos.append('pais', valor('pais'));
+        datos.append('categoria', valor('categoria'));
+        datos.append('nombre', valor('nombre'));
         datos.append('descripcion', descripcionInput ? descripcionInput.value : '');
         datos.append('csrfmiddlewaretoken', csrfEl ? csrfEl.value : '');
 
@@ -530,29 +890,10 @@
                 agregarContenido('id_diagnostico_cifras', data.cifras);
                 agregarContenido('id_diagnostico_antecedentes', data.antecedentes);
                 agregarContenido('id_diagnostico_necesidades', data.necesidades);
-
-                const fuentesWrap = document.getElementById('diagnostico-fuentes-wrap');
-                const fuentesLista = document.getElementById('diagnostico-fuentes-lista');
-                const fuentesInput = document.getElementById('id_diagnostico_fuentes');
-                if (fuentesLista && data.fuentes && data.fuentes.length) {
-                    fuentesLista.innerHTML = '';
-                    data.fuentes.forEach((u) => {
-                        const li = document.createElement('li');
-                        if (typeof u === 'string' && /^https?:\/\//.test(u)) {
-                            const a = document.createElement('a');
-                            a.href = u;
-                            a.target = '_blank';
-                            a.rel = 'noopener';
-                            a.className = 'text-blue-600 underline break-all';
-                            a.textContent = u;
-                            li.appendChild(a);
-                        } else {
-                            li.textContent = u;
-                        }
-                        fuentesLista.appendChild(li);
-                    });
-                    if (fuentesWrap) fuentesWrap.classList.remove('hidden');
+                if (data.fuentes && data.fuentes.length) {
+                    const fuentesInput = document.getElementById('id_diagnostico_fuentes');
                     if (fuentesInput) fuentesInput.value = data.fuentes.join('\n');
+                    pintarFuentes(data.fuentes);
                 }
                 estado.textContent = I18N.diagListo;
             })
@@ -560,59 +901,119 @@
             .finally(() => { btn.disabled = false; });
     }
 
+    function pintarFuentes(fuentes) {
+        const fuentesWrap = document.getElementById('diagnostico-fuentes-wrap');
+        const fuentesLista = document.getElementById('diagnostico-fuentes-lista');
+        if (!fuentesLista || !fuentes.length) return;
+        fuentesLista.innerHTML = '';
+        fuentes.forEach((u) => {
+            const li = document.createElement('li');
+            if (typeof u === 'string' && /^https?:\/\//.test(u)) {
+                const a = document.createElement('a');
+                a.href = u;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.className = 'text-blue-600 underline break-all';
+                a.textContent = u;
+                li.appendChild(a);
+            } else {
+                li.textContent = u;
+            }
+            fuentesLista.appendChild(li);
+        });
+        if (fuentesWrap) fuentesWrap.classList.remove('hidden');
+    }
+
+    // --- 6. RESUMEN DEL PASO 6 ---
+    function tarjeta(paso, titulo, filas) {
+        return `<div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                    <div class="flex items-center justify-between px-5 py-3 border-b bg-gray-50 rounded-t-xl">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <span class="bg-[#7c2d12] text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">${paso}</span>${titulo}
+                        </h3>
+                        <button type="button" onclick="irAPaso(${paso})" class="text-xs font-bold text-[#c2410c] hover:underline">${I18N.editar}</button>
+                    </div>
+                    <dl class="px-5 py-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">${filas}</dl>
+                </div>`;
+    }
+    function dato(etiqueta, contenido, ancho) {
+        return `<div class="${ancho ? 'md:col-span-3' : ''}"><dt class="text-[10px] uppercase font-bold text-gray-400">${etiqueta}</dt><dd class="text-gray-700 mt-0.5">${contenido}</dd></div>`;
+    }
+    function estadoTexto(v) {
+        return v ? `<span class="text-emerald-600 font-semibold">✓ ${I18N.completado}</span> <span class="text-gray-400 text-xs">(${v.length})</span>`
+                 : `<span class="text-gray-400">${I18N.vacio}</span>`;
+    }
+
     function generarResumen() {
-        let form = document.getElementById("wizardForm");
-        let resumenContainer = document.getElementById("resumen-final");
-        if (!form || !resumenContainer) return;
+        const contenedor = document.getElementById('resumen-final');
+        const alertas = document.getElementById('alertas-revision');
+        if (!contenedor) return;
 
-        let resumen = `
-            <p><strong>${I18N.proyecto}:</strong> ${form.nombre ? form.nombre.value : I18N.na}</p>
-            <p><strong>${I18N.categoriaLbl}:</strong> ${form.categoria ? form.categoria.value : I18N.na}</p>
-            <p><strong>${I18N.paisLbl}:</strong> ${form.pais ? form.pais.value : I18N.na}</p>
-            <p><strong>${I18N.inicioLbl}:</strong> ${form.fecha_inicio ? (form.fecha_inicio.value || I18N.noDefinida) : I18N.na}</p>
-            <p><strong>${I18N.finLbl}:</strong> ${form.fecha_fin ? (form.fecha_fin.value || I18N.noDefinida) : I18N.na}</p>
-            <p><strong>${I18N.presupuestoLbl}:</strong> ${form.presupuesto && form.presupuesto.value ? '$' + form.presupuesto.value : I18N.noDefinida}</p>
-        `;
-        resumenContainer.innerHTML = resumen;
+        const ods = form.querySelectorAll('[name="objetivos_desarrollo"]:checked').length;
+        const normas = form.querySelectorAll('[name="leyes"]:checked').length;
+        const documentos = Array.from(form.querySelectorAll('input[type=file]')).filter(i => i.files && i.files.length).length;
+        const descripcion = valor('descripcion');
+
+        const actividades = filasConDatos('actividades');
+        const hitos = actividades.filter(f => celda(f, 'tipo').value === 'HITO').length;
+        const presupuesto = calcularPresupuesto();
+        const riesgos = calcularRiesgos();
+        const nRiesgos = filasConDatos('riesgos_matriz').length;
+        const diagnostico = ['diagnostico_cifras', 'diagnostico_antecedentes', 'diagnostico_necesidades'].map(valor);
+
+        let html = tarjeta(1, I18N.tituloIdentificacion,
+            dato(I18N.proyecto, `<strong>${esc(valor('nombre')) || I18N.noDefinida}</strong>`, true) +
+            dato(I18N.categoriaLbl, esc(textoSeleccion(campo('categoria'))) || I18N.noDefinida) +
+            dato(I18N.paisLbl, esc(textoSeleccion(campo('pais'))) || I18N.noDefinida) +
+            dato(I18N.inicioLbl, formatoFecha(valor('fecha_inicio'))) +
+            dato(I18N.descripcionLbl, `<span class="whitespace-pre-line">${esc(descripcion.length > 300 ? descripcion.slice(0, 300) + '…' : descripcion)}</span>`, true) +
+            dato(I18N.odsLbl, ods) + dato(I18N.normasLbl, normas) + dato(I18N.documentosLbl, documentos));
+
+        html += tarjeta(2, I18N.tituloDiagnostico,
+            dato(I18N.cifrasLbl, estadoTexto(diagnostico[0])) +
+            dato(I18N.antecedentesLbl, estadoTexto(diagnostico[1])) +
+            dato(I18N.necesidadesLbl, estadoTexto(diagnostico[2])));
+
+        const listaActividades = actividades.map(f =>
+            `<li class="flex justify-between gap-4 border-b border-dashed py-1"><span>${celda(f, 'tipo').value === 'HITO' ? '◆' : '•'} ${esc(celda(f, 'nombre').value)}</span><span class="text-gray-400 text-xs whitespace-nowrap">${formatoFecha(celda(f, 'fecha_inicio').value)} → ${formatoFecha(celda(f, 'fecha_fin').value)}</span></li>`
+        ).join('');
+        html += tarjeta(3, I18N.tituloCronograma,
+            dato(I18N.finLbl, formatoFecha(valor('fecha_fin'))) +
+            dato(I18N.duracionLbl, esc(document.getElementById('duracion-proyecto').textContent)) +
+            dato(`${I18N.actividadesLbl} / ${I18N.hitosLbl}`, `${actividades.length - hitos} / ${hitos}`) +
+            (listaActividades ? dato(I18N.actividadesLbl, `<ul>${listaActividades}</ul>`, true) : ''));
+
+        const fuentes = Object.entries(presupuesto.porFuente)
+            .map(([f, m]) => `${esc(f)}: <strong>${formatoUSD.format(m)}</strong>`).join('<br>');
+        html += tarjeta(4, I18N.tituloRecursos,
+            dato(I18N.presupuestoLbl, `<strong class="text-lg">${presupuesto.total ? formatoUSD.format(presupuesto.total) : I18N.noDefinida}</strong>`) +
+            dato(I18N.rubrosLbl, filasConDatos('rubros').length) +
+            dato(I18N.porFuenteLbl, fuentes || '—'));
+
+        html += tarjeta(5, I18N.tituloRiesgos,
+            dato(I18N.riesgosLbl, nRiesgos) +
+            dato(I18N.nivel, Object.entries(riesgos.conteo).map(([n, c]) => `${n}: <strong>${c}</strong>`).join(' · '), true));
+
+        contenedor.innerHTML = html;
+
+        const avisos = [];
+        if (!valor('fecha_fin')) avisos.push(I18N.alertaSinFin);
+        if (!actividades.length) avisos.push(I18N.alertaSinActividades);
+        if (!presupuesto.total) avisos.push(I18N.alertaSinRubros);
+        if (!nRiesgos) avisos.push(I18N.alertaSinRiesgos);
+        if (diagnostico.every(v => !v)) avisos.push(I18N.alertaSinDiagnostico);
+        if (riesgos.altosSinMitigacion) avisos.push(I18N.alertaAltosSinMitigacion);
+        alertas.innerHTML = avisos.length
+            ? `<div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 text-sm"><p class="font-bold mb-1">${I18N.alertaTitulo}</p><ul class="list-disc ml-5 space-y-0.5">${avisos.map(a => `<li>${a}</li>`).join('')}</ul></div>`
+            : `<div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 text-sm font-semibold">✓ ${I18N.listoGuardar}</div>`;
     }
 
-    // Inicializar el primer paso
+    // --- Inicialización ---
+    const fuentesGuardadas = valor('diagnostico_fuentes');
+    if (fuentesGuardadas) pintarFuentes(fuentesGuardadas.split('\n').filter(Boolean));
+    sincronizarFechas();
+    refrescarCalculos();
     showStep(currentStep);
-
-    function showStep(n) {
-    let steps = document.getElementsByClassName("wizard-step");
-    let indicators = document.getElementsByClassName("step-indicator");
-
-    // 1. Ocultar TODO primero
-    for (let i = 0; i < steps.length; i++) {
-        steps[i].style.setProperty("display", "none", "important");
-        steps[i].classList.remove("active");
-        if (indicators[i]) indicators[i].classList.remove("active", "completed");
-    }
-
-    // 2. Mostrar el paso actual por ID o por índice
-    let currentStepEl = document.getElementById(`step-${n}`);
-    if (currentStepEl) {
-        currentStepEl.style.setProperty("display", "block", "important");
-        currentStepEl.classList.add("active");
-    } else if (steps[n-1]) {
-        // Si no encuentra el ID, intenta por índice
-        steps[n-1].style.setProperty("display", "block", "important");
-    }
-
-    // 3. Actualizar indicadores
-    if (indicators[n - 1]) {
-        indicators[n - 1].classList.add("active");
-        for (let j = 0; j < n - 1; j++) {
-            indicators[j].classList.add("completed");
-        }
-    }
-
-    // Botones (mantenemos tu lógica)
-    document.getElementById("prevBtn").style.display = (n === 1) ? "none" : "inline";
-    document.getElementById("nextBtn").style.display = (n === totalSteps) ? "none" : "inline";
-    document.getElementById("submitBtn").style.display = (n === totalSteps) ? "inline" : "none";
-}
 </script>
 
 </body>

@@ -452,3 +452,390 @@ msgstr "16. Peace, justice and strong institutions"
 
 msgid "17. Alianzas para lograr objetivos"
 msgstr "17. Partnerships for the goals"
+
+msgid "caracteres mínimo"
+msgstr "characters minimum"
+
+msgid "País donde se ejecutará el Proyecto"
+msgstr "Country where the project will be carried out"
+
+msgid "Notas Adicionales sobre el Marco Legal"
+msgstr "Additional Notes on the Legal Framework"
+
+msgid "Paso 2: Diagnóstico del Contexto"
+msgstr "Step 2: Context Assessment"
+
+msgid ""
+"Busca automáticamente información oficial del organismo de planeación del "
+"país del proyecto y luego edita o amplía el texto en cada sección."
+msgstr ""
+"Automatically search official information from the planning agency of the "
+"project's country, then edit or expand the text in each section."
+
+msgid "Buscar información oficial"
+msgstr "Search official information"
+
+msgid "Cifras y datos estadísticos"
+msgstr "Figures and statistics"
+
+msgid "Antecedentes (últimos 5 años)"
+msgstr "Background (last 5 years)"
+
+msgid "Sociales, políticos, culturales, legales, ambientales y económicos."
+msgstr "Social, political, cultural, legal, environmental and economic."
+
+msgid "Necesidades y desafíos"
+msgstr "Needs and challenges"
+
+msgid "Fuentes consultadas"
+msgstr "Sources consulted"
+
+msgid "Horizonte del Proyecto"
+msgstr "Project Timeframe"
+
+msgid "Duración"
+msgstr "Duration"
+
+msgid "Actividades e Hitos"
+msgstr "Activities and Milestones"
+
+msgid ""
+"Las actividades deben quedar dentro del rango de fechas del proyecto. Un "
+"hito es un punto de control con un entregable."
+msgstr ""
+"Activities must fall within the project's date range. A milestone is a "
+"checkpoint with a deliverable."
+
+msgid "Tipo"
+msgstr "Type"
+
+msgid "Actividad"
+msgstr "Activity"
+
+msgid "Responsable"
+msgstr "Owner"
+
+msgid "Entregable"
+msgstr "Deliverable"
+
+msgid "Aún no hay actividades registradas."
+msgstr "No activities yet."
+
+msgid "Agregar actividad"
+msgstr "Add activity"
+
+msgid "Vista de línea de tiempo"
+msgstr "Timeline view"
+
+msgid "Presupuesto por Rubro"
+msgstr "Budget by Line Item"
+
+msgid ""
+"Registra cada línea de gasto con su fuente de financiamiento. El total se "
+"calcula automáticamente."
+msgstr ""
+"Record each expense line with its funding source. The total is calculated "
+"automatically."
+
+msgid "Rubro"
+msgstr "Line item"
+
+msgid "Descripción"
+msgstr "Description"
+
+msgid "Fuente"
+msgstr "Source"
+
+msgid "Monto (USD)"
+msgstr "Amount (USD)"
+
+msgid "Aún no hay rubros registrados."
+msgstr "No line items yet."
+
+msgid "Agregar rubro"
+msgstr "Add line item"
+
+msgid "Presupuesto Total (USD)"
+msgstr "Total Budget (USD)"
+
+msgid "Distribución por fuente de financiamiento"
+msgstr "Breakdown by funding source"
+
+msgid "Matriz de Riesgos"
+msgstr "Risk Matrix"
+
+msgid ""
+"El nivel de cada riesgo se calcula como probabilidad × impacto: Bajo (1–2), "
+"Medio (3–4), Alto (6–9)."
+msgstr ""
+"Each risk level is calculated as probability × impact: Low (1–2), Medium "
+"(3–4), High (6–9)."
+
+msgid "Aún no hay riesgos registrados."
+msgstr "No risks yet."
+
+msgid "Agregar riesgo"
+msgstr "Add risk"
+
+msgid "Resumen por nivel"
+msgstr "Summary by level"
+
+msgid "Observaciones generales sobre riesgos"
+msgstr "General notes on risks"
+
+msgid ""
+"Revisa la información de cada paso. Puedes volver a editar cualquier sección"
+" antes de hacer clic en \"Guardar Proyecto\"."
+msgstr ""
+"Review the information from each step. You can go back and edit any section "
+"before clicking \"Save Project\"."
+
+msgid "País"
+msgstr "Country"
+
+msgid "La descripción debe tener al menos 50 caracteres."
+msgstr "The description must be at least 50 characters long."
+
+msgid "Selecciona primero el país del proyecto."
+msgstr "Select the project's country first."
+
+msgid "Buscando en fuentes oficiales..."
+msgstr "Searching official sources..."
+
+msgid "Información cargada. Puedes editarla o ampliarla."
+msgstr "Information loaded. You can edit or expand it."
+
+msgid "No se pudo completar la búsqueda."
+msgstr "The search could not be completed."
+
+msgid "Selecciona la categoría del proyecto."
+msgstr "Select the project category."
+
+msgid "Ingresa la fecha de inicio del proyecto."
+msgstr "Enter the project start date."
+
+msgid "Selecciona el país donde se ejecutará el proyecto."
+msgstr "Select the country where the project will be carried out."
+
+msgid "La fecha de finalización no puede ser anterior a la fecha de inicio."
+msgstr "The end date cannot be earlier than the start date."
+
+msgid "Cada actividad necesita nombre, fecha de inicio y fecha de fin."
+msgstr "Each activity needs a name, a start date and an end date."
+
+msgid "El fin de la actividad no puede ser anterior a su inicio."
+msgstr "The activity's end cannot be earlier than its start."
+
+msgid "Hay actividades fuera del rango de fechas del proyecto."
+msgstr "Some activities fall outside the project's date range."
+
+msgid "Cada rubro necesita tipo, fuente y un monto mayor que cero."
+msgstr ""
+"Each line item needs a type, a source and an amount greater than zero."
+
+msgid "Cada riesgo necesita descripción y tipo."
+msgstr "Each risk needs a description and a type."
+
+msgid "meses"
+msgstr "months"
+
+msgid "días"
+msgstr "days"
+
+msgid "Sin datos"
+msgstr "No data"
+
+msgid "Alto"
+msgstr "High"
+
+msgid "Medio"
+msgstr "Medium"
+
+msgid "Bajo"
+msgstr "Low"
+
+msgid "Nivel"
+msgstr "Level"
+
+msgid "Editar"
+msgstr "Edit"
+
+msgid "Identificación y Viabilidad"
+msgstr "Identification and Feasibility"
+
+msgid "Diagnóstico del Contexto"
+msgstr "Context Assessment"
+
+msgid "Cronograma"
+msgstr "Schedule"
+
+msgid "Recursos"
+msgstr "Resources"
+
+msgid "Riesgos"
+msgstr "Risks"
+
+msgid "ODS seleccionados"
+msgstr "Selected SDGs"
+
+msgid "Normas seleccionadas"
+msgstr "Selected regulations"
+
+msgid "Documentos de soporte"
+msgstr "Supporting documents"
+
+msgid "Completado"
+msgstr "Completed"
+
+msgid "Vacío"
+msgstr "Empty"
+
+msgid "Actividades"
+msgstr "Activities"
+
+msgid "Hitos"
+msgstr "Milestones"
+
+msgid "Rubros"
+msgstr "Line items"
+
+msgid "Por fuente"
+msgstr "By source"
+
+msgid "Riesgos identificados"
+msgstr "Identified risks"
+
+msgid "Recomendaciones antes de guardar (no impiden guardar):"
+msgstr "Recommendations before saving (they don't block saving):"
+
+msgid "No se definió la fecha de finalización del proyecto."
+msgstr "The project end date was not set."
+
+msgid "El cronograma no tiene actividades."
+msgstr "The schedule has no activities."
+
+msgid "El presupuesto no tiene rubros."
+msgstr "The budget has no line items."
+
+msgid "No se identificaron riesgos."
+msgstr "No risks were identified."
+
+msgid "El diagnóstico del contexto está vacío."
+msgstr "The context assessment is empty."
+
+msgid "Hay riesgos de nivel alto sin medida de mitigación."
+msgstr "Some high-level risks have no mitigation measure."
+
+msgid "Todo listo. Revisa el resumen y guarda el proyecto."
+msgstr "All set. Review the summary and save the project."
+
+msgid "Eliminar"
+msgstr "Remove"
+
+msgid "Riesgo"
+msgstr "Risk"
+
+msgid "Probabilidad"
+msgstr "Probability"
+
+msgid "Impacto"
+msgstr "Impact"
+
+msgid "Medida de mitigación"
+msgstr "Mitigation measure"
+
+msgid "URLs de las fuentes oficiales usadas para generar el diagnóstico."
+msgstr "URLs of the official sources used to generate the assessment."
+
+msgid "Hito"
+msgstr "Milestone"
+
+msgid "Talento humano"
+msgstr "Human resources"
+
+msgid "Equipos y tecnología"
+msgstr "Equipment and technology"
+
+msgid "Materiales e insumos"
+msgstr "Materials and supplies"
+
+msgid "Servicios y consultorías"
+msgstr "Services and consulting"
+
+msgid "Infraestructura y obras"
+msgstr "Infrastructure and works"
+
+msgid "Viajes y logística"
+msgstr "Travel and logistics"
+
+msgid "Gastos administrativos"
+msgstr "Administrative costs"
+
+msgid "Otros"
+msgstr "Other"
+
+msgid "Recursos propios"
+msgstr "Own funds"
+
+msgid "Presupuesto público"
+msgstr "Public budget"
+
+msgid "Cooperación internacional"
+msgstr "International cooperation"
+
+msgid "Aporte privado"
+msgstr "Private contribution"
+
+msgid "Crédito / financiamiento"
+msgstr "Loan / financing"
+
+msgid "Financiero"
+msgstr "Financial"
+
+msgid "Técnico / operativo"
+msgstr "Technical / operational"
+
+msgid "Legal / regulatorio"
+msgstr "Legal / regulatory"
+
+msgid "Social"
+msgstr "Social"
+
+msgid "Ambiental"
+msgstr "Environmental"
+
+msgid "Político / institucional"
+msgstr "Political / institutional"
+
+msgid "Baja"
+msgstr "Low"
+
+msgid "Media"
+msgstr "Medium"
+
+msgid "Alta"
+msgstr "High"
+
+msgid "Supuestos, dependencias externas u otros comentarios"
+msgstr "Assumptions, external dependencies or other comments"
+
+msgid "Ej: Diagnóstico participativo"
+msgstr "E.g.: Participatory assessment"
+
+msgid "Detalle del gasto"
+msgstr "Expense detail"
+
+msgid "El monto debe ser mayor que cero."
+msgstr "The amount must be greater than zero."
+
+msgid "Ej: Retraso en desembolsos"
+msgstr "E.g.: Disbursement delays"
+
+msgid "Completa el nombre y la descripción del proyecto en el Paso 1."
+msgstr "Complete the project name and description in Step 1."
+
+msgid "Inicia antes que el proyecto."
+msgstr "Starts before the project."
+
+msgid "Termina después que el proyecto."
+msgstr "Ends after the project."
