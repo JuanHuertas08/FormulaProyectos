@@ -438,6 +438,30 @@
         </div>
     </main>
 
+    <div id="loader-busqueda" class="hidden fixed inset-0 z-50 items-center justify-center bg-[#3a1408]/60 backdrop-blur-sm p-4"
+         role="dialog" aria-modal="true" aria-labelledby="loader-titulo" aria-live="polite">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+            <div class="mx-auto w-16 h-16 rounded-full border-4 border-orange-100 border-t-[#c2410c] animate-spin" aria-hidden="true"></div>
+            <h3 id="loader-titulo" class="mt-6 text-lg font-bold text-gray-800">{% trans "Buscando información oficial" %}</h3>
+            <p class="mt-2 text-sm text-gray-500">{% trans "Estamos consultando las fuentes oficiales de planeación y estadística del país. Esto puede tardar unos minutos." %}</p>
+            <p class="mt-4 text-xs text-gray-400">{% trans "Tiempo transcurrido:" %} <span id="loader-tiempo" class="font-bold text-gray-600">0</span> s</p>
+
+            <div id="loader-pregunta" class="hidden mt-6 pt-6 border-t">
+                <p id="loader-pregunta-texto" class="text-sm font-semibold text-gray-700"></p>
+                <div class="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                    <button type="button" id="loader-continuar" onclick="loader.continuar()"
+                        class="px-5 py-2 bg-gradient-to-r from-[#7c2d12] to-[#c2410c] text-white rounded-lg hover:brightness-110 shadow-md transition font-bold">
+                        {% trans "Continuar buscando" %}
+                    </button>
+                    <button type="button" onclick="loader.cancelar()"
+                        class="px-5 py-2 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 transition font-bold">
+                        {% trans "Cancelar búsqueda" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {{ leyes_seleccionadas|json_script:"leyes-seleccionadas" }}
 <script>
     const I18N = {
@@ -457,6 +481,8 @@
         diagBuscando: "{% trans 'Buscando en fuentes oficiales...' %}",
         diagListo: "{% trans 'Información cargada. Puedes editarla o ampliarla.' %}",
         diagError: "{% trans 'No se pudo completar la búsqueda.' %}",
+        diagCancelada: "{% trans 'Búsqueda cancelada. Puedes intentarlo de nuevo o completar el diagnóstico manualmente.' %}",
+        diagTardando: "{% trans 'La búsqueda lleva %s segundos. ¿Deseas seguir esperando?' %}",
         seleccionaCategoria: "{% trans 'Selecciona la categoría del proyecto.' %}",
         ingresaFechaInicio: "{% trans 'Ingresa la fecha de inicio del proyecto.' %}",
         seleccionaPais: "{% trans 'Selecciona el país donde se ejecutará el proyecto.' %}",
@@ -860,6 +886,62 @@
         el.value = el.value.trim() ? `${el.value.trim()}\n\n---\n\n${textoNuevo}` : textoNuevo;
     }
 
+    // Loader que bloquea la pantalla mientras corre la búsqueda. Cada
+    // SEGUNDOS_CONFIRMACION segundos pregunta si se desea seguir esperando o
+    // cancelar; cancelar aborta la petición en el navegador.
+    const SEGUNDOS_CONFIRMACION = 20;
+    const loader = {
+        el: document.getElementById('loader-busqueda'),
+        tiempo: document.getElementById('loader-tiempo'),
+        pregunta: document.getElementById('loader-pregunta'),
+        preguntaTexto: document.getElementById('loader-pregunta-texto'),
+        btnContinuar: document.getElementById('loader-continuar'),
+        inicio: 0,
+        reloj: null,
+        aviso: null,
+        controlador: null,
+
+        abrir(controlador) {
+            this.controlador = controlador;
+            this.inicio = Date.now();
+            this.pregunta.classList.add('hidden');
+            this.tiempo.textContent = '0';
+            this.el.classList.remove('hidden');
+            this.el.classList.add('flex');
+            document.querySelector('main').inert = true;
+            document.querySelector('nav').inert = true;
+            this.reloj = setInterval(() => {
+                this.tiempo.textContent = Math.floor((Date.now() - this.inicio) / 1000);
+            }, 1000);
+            this.programarAviso();
+        },
+        programarAviso() {
+            clearTimeout(this.aviso);
+            this.aviso = setTimeout(() => {
+                const segundos = Math.floor((Date.now() - this.inicio) / 1000);
+                this.preguntaTexto.textContent = I18N.diagTardando.replace('%s', segundos);
+                this.pregunta.classList.remove('hidden');
+                this.btnContinuar.focus();
+            }, SEGUNDOS_CONFIRMACION * 1000);
+        },
+        continuar() {
+            this.pregunta.classList.add('hidden');
+            this.programarAviso();
+        },
+        cancelar() {
+            if (this.controlador) this.controlador.abort();
+        },
+        cerrar() {
+            clearInterval(this.reloj);
+            clearTimeout(this.aviso);
+            this.controlador = null;
+            this.el.classList.add('hidden');
+            this.el.classList.remove('flex');
+            document.querySelector('main').inert = false;
+            document.querySelector('nav').inert = false;
+        },
+    };
+
     function buscarDiagnostico() {
         const btn = document.getElementById('btnDiagnostico');
         const estado = document.getElementById('diagnostico-estado');
@@ -877,12 +959,15 @@
         datos.append('descripcion', descripcionInput ? descripcionInput.value : '');
         datos.append('csrfmiddlewaretoken', csrfEl ? csrfEl.value : '');
 
+        const controlador = new AbortController();
         btn.disabled = true;
         estado.textContent = I18N.diagBuscando;
+        loader.abrir(controlador);
 
-        fetch("{% url 'buscar_diagnostico' %}", { method: 'POST', body: datos })
+        fetch("{% url 'buscar_diagnostico' %}", { method: 'POST', body: datos, signal: controlador.signal })
             .then(async (resp) => {
-                const data = await resp.json();
+                // Si el servidor responde con una página de error (502/504) no hay JSON
+                const data = await resp.json().catch(() => ({}));
                 if (!resp.ok) throw new Error(data.error || I18N.diagError);
                 return data;
             })
@@ -897,8 +982,13 @@
                 }
                 estado.textContent = I18N.diagListo;
             })
-            .catch((err) => { estado.textContent = err.message; })
-            .finally(() => { btn.disabled = false; });
+            .catch((err) => {
+                estado.textContent = err.name === 'AbortError' ? I18N.diagCancelada : err.message;
+            })
+            .finally(() => {
+                loader.cerrar();
+                btn.disabled = false;
+            });
     }
 
     function pintarFuentes(fuentes) {

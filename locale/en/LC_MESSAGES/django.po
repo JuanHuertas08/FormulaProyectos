@@ -839,3 +839,33 @@ msgstr "Starts before the project."
 
 msgid "Termina después que el proyecto."
 msgstr "Ends after the project."
+
+msgid ""
+"Búsqueda cancelada. Puedes intentarlo de nuevo o completar el diagnóstico "
+"manualmente."
+msgstr ""
+"Search cancelled. You can try again or complete the assessment manually."
+
+#, python-format
+msgid "La búsqueda lleva %s segundos. ¿Deseas seguir esperando?"
+msgstr ""
+"The search has been running for %s seconds. Do you want to keep waiting?"
+
+msgid "Buscando información oficial"
+msgstr "Searching official information"
+
+msgid ""
+"Estamos consultando las fuentes oficiales de planeación y estadística del "
+"país. Esto puede tardar unos minutos."
+msgstr ""
+"We're checking the country's official planning and statistics sources. This "
+"may take a few minutes."
+
+msgid "Tiempo transcurrido:"
+msgstr "Elapsed time:"
+
+msgid "Continuar buscando"
+msgstr "Keep searching"
+
+msgid "Cancelar búsqueda"
+msgstr "Cancel search"

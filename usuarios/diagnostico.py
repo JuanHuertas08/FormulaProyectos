@@ -18,6 +18,10 @@ FUENTES_POR_PAIS = {
 
 MODEL = 'claude-opus-5'
 
+# Tiempo máximo de la llamada a la IA. Debe ser menor que el timeout de
+# gunicorn (gunicorn.conf.py) para devolver un error controlado en vez de un 502.
+TIMEOUT_SEGUNDOS = 180
+
 
 class DiagnosticoError(Exception):
     """Error controlado al generar el diagnóstico (clave no configurada, IA no
@@ -37,7 +41,7 @@ def generar_diagnostico(*, pais, categoria, nombre, descripcion):
 
     import anthropic
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = anthropic.Anthropic(api_key=api_key, timeout=TIMEOUT_SEGUNDOS, max_retries=0)
 
     prompt = f"""Eres un analista de planeación pública. Investiga en las fuentes
 oficiales permitidas de {pais} (el organismo nacional de planeación, el
@@ -82,6 +86,11 @@ esta forma exacta:
             }],
             messages=[{'role': 'user', 'content': prompt}],
         )
+    except anthropic.APITimeoutError as exc:
+        logger.warning('La búsqueda del diagnóstico superó %s s', TIMEOUT_SEGUNDOS)
+        raise DiagnosticoError(
+            'La búsqueda tardó demasiado. Intenta de nuevo o completa el diagnóstico manualmente.'
+        ) from exc
     except anthropic.APIError as exc:
         logger.exception('Error llamando a la API de Anthropic para el diagnóstico')
         raise DiagnosticoError('No se pudo contactar el servicio de búsqueda. Intenta de nuevo.') from exc
