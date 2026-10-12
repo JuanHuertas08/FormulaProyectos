@@ -332,3 +332,40 @@ class BuscarDiagnosticoVistaTests(TestCase):
     def test_seccion_invalida(self):
         resp = self.client.post(self.url, {'pais': 'COL', 'nombre': 'C', 'descripcion': 'D', 'seccion': 'otra'})
         self.assertEqual(resp.status_code, 400)
+
+
+class ResumenBusquedasTests(TestCase):
+    def test_resume_consultas_resultados_y_errores(self):
+        contenido = [
+            SimpleNamespace(type='server_tool_use', id='a', input={'query': 'adultos mayores Choluteca'}),
+            SimpleNamespace(type='web_search_tool_result', tool_use_id='a', content=[
+                SimpleNamespace(url='https://www.ine.gob.hn/x'), SimpleNamespace(url='https://www.ine.gob.hn/y'),
+            ]),
+            SimpleNamespace(type='server_tool_use', id='b', input={'query': 'pobreza Honduras'}),
+            SimpleNamespace(type='web_search_tool_result', tool_use_id='b',
+                            content=SimpleNamespace(type='web_search_tool_result_error', error_code='unavailable')),
+        ]
+        self.assertEqual(diagnostico.resumen_busquedas(contenido), [
+            "búsqueda \"adultos mayores Choluteca\": 2 resultados ['www.ine.gob.hn']",
+            'búsqueda "pobreza Honduras": ERROR unavailable',
+        ])
+
+    def test_sin_busquedas(self):
+        self.assertEqual(diagnostico.resumen_busquedas([]), ['la IA no hizo ninguna búsqueda web'])
+
+
+@override_settings(ANTHROPIC_API_KEY='clave-de-prueba')
+class ProbarDiagnosticoComandoTests(TestCase):
+    def test_sin_restriccion_omite_allowed_domains_y_muestra_detalle(self):
+        from io import StringIO
+        from django.core.management import call_command
+
+        salida = StringIO()
+        with mock.patch('anthropic.Anthropic') as cliente:
+            create = cliente.return_value.with_options.return_value.beta.messages.create
+            create.return_value = respuesta_api('{"cifras": "Dato", "antecedentes": "", "necesidades": "x"}')
+            call_command('probar_diagnostico', pais='HND', descripcion='Centro', sin_restriccion=True, stdout=salida)
+        self.assertNotIn('allowed_domains', create.call_args.kwargs['tools'][0])
+        texto = salida.getvalue()
+        self.assertIn('toda la web', texto)
+        self.assertIn('antecedentes: VACÍA', texto)

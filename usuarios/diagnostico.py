@@ -204,6 +204,30 @@ def _resultados_busqueda(contenido):
     return urls, errores
 
 
+def resumen_busquedas(contenido):
+    """Una línea por búsqueda web: la consulta que hizo la IA y cuántos
+    resultados devolvió (o el código de error). Para logs y diagnóstico."""
+    consultas = {}
+    lineas = []
+    for block in contenido:
+        tipo = getattr(block, 'type', None)
+        if tipo == 'server_tool_use':
+            entrada = getattr(block, 'input', None) or {}
+            consulta = entrada.get('query') if isinstance(entrada, dict) else getattr(entrada, 'query', None)
+            consultas[getattr(block, 'id', None)] = consulta or '(sin consulta)'
+        elif tipo == 'web_search_tool_result':
+            consulta = consultas.get(getattr(block, 'tool_use_id', None), '(consulta desconocida)')
+            resultado = getattr(block, 'content', None)
+            if isinstance(resultado, list):
+                dominios = sorted({(getattr(r, 'url', '') or '').split('/')[2] for r in resultado if getattr(r, 'url', '').count('/') >= 2})
+                lineas.append(f'búsqueda "{consulta}": {len(resultado)} resultados {dominios}')
+            else:
+                lineas.append(f'búsqueda "{consulta}": ERROR {getattr(resultado, "error_code", "desconocido")}')
+    if not lineas:
+        lineas.append('la IA no hizo ninguna búsqueda web')
+    return lineas
+
+
 def _texto_final(contenido):
     """Texto escrito después de la última búsqueda (donde va el JSON). Si no
     hay texto ahí, todo el texto de la respuesta."""
@@ -227,8 +251,9 @@ def _llamar_api(client, *, prompt, max_busquedas, dominios):
         'type': 'web_search_20260209',
         'name': 'web_search',
         'max_uses': max_busquedas,
-        'allowed_domains': dominios,
     }]
+    if dominios:
+        tools[0]['allowed_domains'] = dominios
     limite = time.monotonic() + TIMEOUT_SEGUNDOS
     contenido = []
     response = None
@@ -315,6 +340,8 @@ def generar_diagnostico(*, pais, categoria, nombre, descripcion, contexto=None, 
         dominios=dominios,
     )
     urls, errores_busqueda = _resultados_busqueda(contenido)
+    for linea in resumen_busquedas(contenido):
+        logger.info('Diagnóstico: %s', linea)
     if errores_busqueda:
         logger.warning('Diagnóstico: errores de la herramienta de búsqueda: %s', errores_busqueda)
 
