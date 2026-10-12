@@ -21,6 +21,7 @@ urlpatterns = [
     # He dejado solo 'crear_proyecto' que es la vista que unificamos
     # para manejar todos los pasos del wizard.
     path('crear-proyecto/', views.crear_proyecto, name='crear_proyecto'),
+    path('proyectos/<int:pk>/', views.crear_proyecto, name='editar_proyecto'),
     path('api/leyes/', views.obtener_leyes_por_pais, name='obtener_leyes'),
     path('api/diagnostico/', views.buscar_diagnostico, name='buscar_diagnostico'),
 ]

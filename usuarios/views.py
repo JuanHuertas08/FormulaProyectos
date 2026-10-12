@@ -1,12 +1,13 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from .forms import RegistroForm, Paso1ProjectForm, ActividadFormSet, RubroFormSet, RiesgoFormSet
-from .models import Perfil, DocumentoSoporte
+from .models import Perfil, Proyecto, DocumentoSoporte
 from .diagnostico import generar_diagnostico, DiagnosticoError, FUENTES_POR_PAIS
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
@@ -110,10 +111,11 @@ PREFIJO_RIESGOS = 'riesgos_matriz'
 
 
 def _filas_vigentes(formset):
-    """Formularios del formset con datos y no marcados para eliminar."""
+    """Formularios del formset con datos (filas ya guardadas o nuevas con
+    cambios) y no marcados para eliminar."""
     return [
         f for f in formset.forms
-        if f.has_changed() and not (formset.can_delete and formset._should_delete_form(f))
+        if (f.instance.pk or f.has_changed()) and not formset._should_delete_form(f)
     ]
 
 
@@ -134,24 +136,37 @@ def _validar_cronograma(form, actividades):
     return valido
 
 
+def _paso_valido(valor, defecto=1):
+    try:
+        return min(max(int(valor), 1), 6)
+    except (TypeError, ValueError):
+        return defecto
+
+
 @login_required
-def crear_proyecto(request):
+def crear_proyecto(request, pk=None):
     """
-    Vista única que orquesta el Wizard de 6 pasos.
-    El formulario completo se envía en un solo POST (el JS solo oculta/muestra
-    secciones), así que al validar se persiste el Proyecto directamente en la BD,
-    junto con las tablas del cronograma (Paso 3), presupuesto (Paso 4) y
-    matriz de riesgos (Paso 5).
+    Wizard de 6 pasos para crear (sin pk) o continuar/editar (con pk) un proyecto.
+
+    Todo el formulario se envía en un solo POST (el JS solo oculta/muestra
+    pasos) con un campo "accion":
+    - "borrador" (botón "Guardar avance" de los pasos 1 a 5): guarda lo que haya,
+      exigiendo solo el nombre, deja el proyecto "En Proceso" y vuelve al mismo paso.
+    - "finalizar" (botón del Paso 6): valida todo, guarda y deja el proyecto "Completo".
     """
-    paso_con_error = 1
+    proyecto = get_object_or_404(Proyecto, pk=pk, usuario=request.user) if pk else None
+    paso_inicial = _paso_valido(request.GET.get('paso'), proyecto.paso_actual if proyecto else 1)
+
     if request.method == 'POST':
-        form = Paso1ProjectForm(request.POST, request.FILES)
-        actividades = ActividadFormSet(request.POST, prefix=PREFIJO_ACTIVIDADES)
-        rubros = RubroFormSet(request.POST, prefix=PREFIJO_RUBROS)
-        riesgos = RiesgoFormSet(request.POST, prefix=PREFIJO_RIESGOS)
+        borrador = request.POST.get('accion') == 'borrador'
+        paso_enviado = _paso_valido(request.POST.get('paso'))
+        form = Paso1ProjectForm(request.POST, request.FILES, instance=proyecto, borrador=borrador)
+        actividades = ActividadFormSet(request.POST, instance=proyecto, prefix=PREFIJO_ACTIVIDADES)
+        rubros = RubroFormSet(request.POST, instance=proyecto, prefix=PREFIJO_RUBROS)
+        riesgos = RiesgoFormSet(request.POST, instance=proyecto, prefix=PREFIJO_RIESGOS)
 
         form_ok = form.is_valid()
-        actividades_ok = actividades.is_valid() and form_ok and _validar_cronograma(form, actividades)
+        actividades_ok = actividades.is_valid() and form_ok and (borrador or _validar_cronograma(form, actividades))
         rubros_ok = rubros.is_valid()
         riesgos_ok = riesgos.is_valid()
 
@@ -165,6 +180,12 @@ def crear_proyecto(request):
                 proyecto.presupuesto = sum(
                     (f.cleaned_data['monto'] for f in _filas_vigentes(rubros)), Decimal('0')
                 ) or None
+                if borrador:
+                    proyecto.estado = Proyecto.ESTADO_EN_PROCESO
+                    proyecto.paso_actual = paso_enviado
+                else:
+                    proyecto.estado = Proyecto.ESTADO_COMPLETO
+                    proyecto.paso_actual = 6
                 proyecto.save()
 
                 for formset in (actividades, rubros, riesgos):
@@ -182,30 +203,51 @@ def crear_proyecto(request):
                             seccion=seccion,
                         )
 
-            messages.success(request, _('Proyecto "%(nombre)s" creado con éxito.') % {'nombre': proyecto.nombre})
+            if borrador:
+                messages.success(request, _('Proyecto guardado temporalmente. Estado: En Proceso.'))
+                url = reverse('editar_proyecto', args=[proyecto.pk])
+                return redirect(f'{url}?paso={paso_enviado}')
+
+            messages.success(
+                request,
+                _('Proyecto "%(nombre)s" almacenado satisfactoriamente. Estado: Completo.') % {'nombre': proyecto.nombre},
+            )
             return redirect('home')
 
         # Reabrir el wizard en el primer paso que tenga errores
         errores_paso_1 = {'nombre', 'categoria', 'fecha_inicio', 'descripcion', 'pais'}
         if form.errors.keys() & errores_paso_1:
-            paso_con_error = 1
+            paso_inicial = 1
         elif not actividades_ok or 'fecha_fin' in form.errors:
-            paso_con_error = 3
+            paso_inicial = 3
         elif not rubros_ok:
-            paso_con_error = 4
+            paso_inicial = 4
         elif not riesgos_ok:
-            paso_con_error = 5
+            paso_inicial = 5
+        else:
+            paso_inicial = paso_enviado
+        leyes_seleccionadas = request.POST.getlist('leyes')
     else:
-        form = Paso1ProjectForm()
-        actividades = ActividadFormSet(prefix=PREFIJO_ACTIVIDADES)
-        rubros = RubroFormSet(prefix=PREFIJO_RUBROS)
-        riesgos = RiesgoFormSet(prefix=PREFIJO_RIESGOS)
+        form = Paso1ProjectForm(instance=proyecto)
+        actividades = ActividadFormSet(instance=proyecto, prefix=PREFIJO_ACTIVIDADES)
+        rubros = RubroFormSet(instance=proyecto, prefix=PREFIJO_RUBROS)
+        riesgos = RiesgoFormSet(instance=proyecto, prefix=PREFIJO_RIESGOS)
+        leyes_seleccionadas = proyecto.leyes.split(',') if proyecto and proyecto.leyes else []
+
+    # Documentos ya cargados, agrupados por sufijo de sección (int, nac, ...)
+    documentos = {sufijo: [] for sufijo in SECCIONES_SOPORTE}
+    if proyecto and proyecto.pk:
+        seccion_a_sufijo = {v: k for k, v in SECCIONES_SOPORTE.items()}
+        for doc in proyecto.documentos.all():
+            documentos[seccion_a_sufijo[doc.seccion]].append(doc)
 
     return render(request, 'usuarios/crear_proyecto.html', {
         'form': form,
+        'proyecto': proyecto if proyecto and proyecto.pk else None,
         'actividades': actividades,
         'rubros': rubros,
         'riesgos': riesgos,
-        'paso_inicial': paso_con_error,
-        'leyes_seleccionadas': request.POST.getlist('leyes') if request.method == 'POST' else [],
+        'paso_inicial': paso_inicial,
+        'leyes_seleccionadas': leyes_seleccionadas,
+        'documentos': documentos,
     })

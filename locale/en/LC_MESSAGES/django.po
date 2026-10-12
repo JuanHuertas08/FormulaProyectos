@@ -869,3 +869,47 @@ msgstr "Keep searching"
 
 msgid "Cancelar búsqueda"
 msgstr "Cancel search"
+
+msgid "En Proceso"
+msgstr "In Progress"
+
+msgid "Completo"
+msgstr "Complete"
+
+msgid "Editando:"
+msgstr "Editing:"
+
+msgid "Última actualización:"
+msgstr "Last updated:"
+
+msgid "Guarda el proyecto en estado En Proceso para continuarlo después"
+msgstr "Saves the project as In Progress so you can continue later"
+
+msgid "Guardar avance"
+msgstr "Save progress"
+
+msgid "Ingresa al menos el nombre del proyecto para guardar el avance."
+msgstr "Enter at least the project name to save your progress."
+
+msgid "Proyecto guardado temporalmente. Estado: En Proceso."
+msgstr "Project saved temporarily. Status: In Progress."
+
+#, python-format
+msgid "Proyecto \"%(nombre)s\" almacenado satisfactoriamente. Estado: Completo."
+msgstr "Project \"%(nombre)s\" saved successfully. Status: Complete."
+
+msgid "Actualizado:"
+msgstr "Updated:"
+
+msgid "Proyecto completo"
+msgstr "Complete project"
+
+msgid "Ver / editar"
+msgstr "View / edit"
+
+#, python-format
+msgid "Guardado en el Paso %(paso)s de 6"
+msgstr "Saved at Step %(paso)s of 6"
+
+msgid "Continuar"
+msgstr "Continue"

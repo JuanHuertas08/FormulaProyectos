@@ -39,11 +39,21 @@ def guardar_perfil_usuario(sender, instance, **kwargs):
 
 
 class Proyecto(models.Model):
+    ESTADO_EN_PROCESO = 'EN_PROCESO'
+    ESTADO_COMPLETO = 'COMPLETO'
+    ESTADO_CHOICES = [
+        (ESTADO_EN_PROCESO, _('En Proceso')),
+        (ESTADO_COMPLETO, _('Completo')),
+    ]
+
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='proyectos', null=True, blank=True)
     nombre = models.CharField(max_length=255)
-    descripcion = models.TextField(validators=[validar_descripcion_minima])
-    fecha_inicio = models.DateField()
-    categoria = models.CharField(max_length=100)
+    # Descripción, fecha de inicio y categoría pueden quedar vacías (o la
+    # descripción corta) mientras el proyecto está En Proceso; el formulario
+    # las exige, con validar_descripcion_minima, al finalizarlo.
+    descripcion = models.TextField(blank=True)
+    fecha_inicio = models.DateField(null=True, blank=True)
+    categoria = models.CharField(max_length=100, blank=True)
     pais = models.CharField(max_length=10, blank=True)
     # Campos de texto para articulaciones
     articulacion_nacional = models.TextField(blank=True)
@@ -62,6 +72,16 @@ class Proyecto(models.Model):
     # Paso 5: Riesgos
     riesgos = models.TextField(blank=True)  # observaciones generales; la matriz vive en RiesgoProyecto
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default=ESTADO_EN_PROCESO)
+    # Último paso del wizard en el que se guardó (para retomar desde ahí)
+    paso_actual = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['-fecha_actualizacion']
+
+    def __str__(self):
+        return self.nombre
 
     # Paso 2: Diagnóstico del contexto (autocompletado por IA + editable por el usuario)
     diagnostico_cifras = models.TextField(

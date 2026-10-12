@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from .models import Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
+from .models import validar_descripcion_minima, Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
 
 class RegistroForm(forms.ModelForm):
     nombres = forms.CharField(label=_("Nombres"), widget=forms.TextInput(attrs={'placeholder': 'Ej. Juan Pedro'}))
@@ -94,7 +94,7 @@ class Paso1ProjectForm(forms.ModelForm):
     fecha_fin = forms.DateField(
         label=_("Fecha de Finalización"),
         required=False,
-        widget=forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'type': 'date'})
+        widget=forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'type': 'date'}, format='%Y-%m-%d')
     )
 
     # Paso 4: Recursos. El total se calcula a partir de los rubros (ver
@@ -117,17 +117,17 @@ class Paso1ProjectForm(forms.ModelForm):
     diagnostico_cifras = forms.CharField(
         label=_("Cifras y datos estadísticos"),
         required=False,
-        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 10})
     )
     diagnostico_antecedentes = forms.CharField(
         label=_("Antecedentes (últimos 5 años)"),
         required=False,
-        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 10})
     )
     diagnostico_necesidades = forms.CharField(
         label=_("Necesidades y desafíos"),
         required=False,
-        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 6})
+        widget=forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg focus:ring-2 focus:ring-orange-500 outline-none', 'rows': 10})
     )
     diagnostico_fuentes = forms.CharField(
         required=False,
@@ -138,7 +138,7 @@ class Paso1ProjectForm(forms.ModelForm):
     class Meta:
         model = Proyecto
         fields = [
-            'nombre', 'categoria', 'fecha_inicio', 'descripcion',
+            'nombre', 'categoria', 'fecha_inicio', 'descripcion', 'descripcion_detallada',
             'articulacion_nacional', 'articulacion_regional',
             'articulacion_municipal', 'articulacion_institucional',
             'pais', 'fecha_fin', 'presupuesto', 'riesgos',
@@ -147,13 +147,28 @@ class Paso1ProjectForm(forms.ModelForm):
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'w-full p-3 border rounded-lg', 'placeholder': 'Ej: Proyecto Integración social'}),
-            'fecha_inicio': forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg', 'type': 'date'}),
+            'fecha_inicio': forms.DateInput(attrs={'class': 'w-full p-3 border rounded-lg', 'type': 'date'}, format='%Y-%m-%d'),
             'descripcion': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 3, 'minlength': 50}),
             'articulacion_nacional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_regional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_municipal': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
             'articulacion_institucional': forms.Textarea(attrs={'class': 'w-full p-3 border rounded-lg', 'rows': 2}),
                     }
+
+    # Campos del Paso 1 obligatorios para finalizar el proyecto. Un borrador
+    # ("Guardar avance") solo exige el nombre.
+    CAMPOS_OBLIGATORIOS_FINAL = ['categoria', 'fecha_inicio', 'descripcion', 'pais']
+
+    def __init__(self, *args, borrador=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.borrador = borrador
+        for nombre in self.CAMPOS_OBLIGATORIOS_FINAL:
+            self.fields[nombre].required = not borrador
+        if not borrador:
+            self.fields['descripcion'].validators.append(validar_descripcion_minima)
+        # Al editar, reflejar los ODS guardados (texto separado por comas)
+        if self.instance.pk and self.instance.objetivos_desarrollo:
+            self.initial['objetivos_desarrollo'] = self.instance.objetivos_desarrollo.split(',')
 
     def clean(self):
         cleaned_data = super().clean()

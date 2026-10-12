@@ -109,6 +109,76 @@ class CrearProyectoWizardTests(TestCase):
         self.assertEqual(resp.context['paso_inicial'], 4)
         self.assertFalse(Proyecto.objects.exists())
 
+    def test_guardar_proyecto_final_queda_completo(self):
+        resp = self.client.post(self.url, self.datos_base(accion='finalizar', paso='6'))
+        self.assertRedirects(resp, reverse('home'))
+        proyecto = Proyecto.objects.get()
+        self.assertEqual(proyecto.estado, Proyecto.ESTADO_COMPLETO)
+        self.assertEqual(proyecto.paso_actual, 6)
+
+    def test_guardar_avance_solo_exige_nombre_y_queda_en_proceso(self):
+        datos = {
+            'nombre': 'Borrador',
+            'descripcion': 'corta',
+            'accion': 'borrador',
+            'paso': '2',
+            **gestion('actividades', 0),
+            **gestion('rubros', 0),
+            **gestion('riesgos_matriz', 0),
+        }
+        resp = self.client.post(self.url, datos)
+        proyecto = Proyecto.objects.get()
+        self.assertRedirects(resp, reverse('editar_proyecto', args=[proyecto.pk]) + '?paso=2')
+        self.assertEqual(proyecto.estado, Proyecto.ESTADO_EN_PROCESO)
+        self.assertEqual(proyecto.paso_actual, 2)
+        self.assertIsNone(proyecto.fecha_inicio)
+
+    def test_guardar_avance_sin_nombre_falla(self):
+        datos = self.datos_base(nombre='', accion='borrador', paso='3')
+        resp = self.client.post(self.url, datos)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.context['paso_inicial'], 1)
+        self.assertFalse(Proyecto.objects.exists())
+
+    def test_finalizar_exige_campos_del_paso_1(self):
+        datos = self.datos_base(descripcion='corta', accion='finalizar')
+        resp = self.client.post(self.url, datos)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('descripcion', resp.context['form'].errors)
+        self.assertEqual(resp.context['paso_inicial'], 1)
+
+    def test_continuar_borrador_y_finalizar_conserva_filas(self):
+        proyecto = Proyecto.objects.create(usuario=self.user, nombre='Borrador', paso_actual=4)
+        rubro = proyecto.rubros.create(rubro='INFRA', fuente='PUBLICO', monto=Decimal('100'))
+        url = reverse('editar_proyecto', args=[proyecto.pk])
+
+        resp = self.client.get(url)
+        self.assertEqual(resp.context['paso_inicial'], 4)
+        self.assertContains(resp, 'name="rubros-0-id"')
+
+        # La fila existente se reenvía sin cambios y se agrega una nueva
+        datos = self.datos_base(**{
+            'rubros-TOTAL_FORMS': '2', 'rubros-INITIAL_FORMS': '1',
+            'rubros-MIN_NUM_FORMS': '0', 'rubros-MAX_NUM_FORMS': '1000',
+            'rubros-0-id': str(rubro.pk), 'rubros-0-rubro': 'INFRA',
+            'rubros-0-fuente': 'PUBLICO', 'rubros-0-monto': '100.00',
+            'rubros-1-rubro': 'TALENTO', 'rubros-1-fuente': 'PROPIOS', 'rubros-1-monto': '50',
+            'accion': 'finalizar',
+        })
+        resp = self.client.post(url, datos)
+        self.assertRedirects(resp, reverse('home'))
+        proyecto.refresh_from_db()
+        self.assertEqual(proyecto.estado, Proyecto.ESTADO_COMPLETO)
+        self.assertEqual(proyecto.rubros.count(), 2)
+        self.assertEqual(proyecto.presupuesto, Decimal('150.00'))
+        self.assertEqual(Proyecto.objects.count(), 1)
+
+    def test_no_se_puede_editar_proyecto_de_otro_usuario(self):
+        otro = User.objects.create_user('beto', password='clave-segura-456')
+        ajeno = Proyecto.objects.create(usuario=otro, nombre='Ajeno')
+        resp = self.client.get(reverse('editar_proyecto', args=[ajeno.pk]))
+        self.assertEqual(resp.status_code, 404)
+
     def test_filas_vacias_se_ignoran(self):
         datos = self.datos_base(**{
             **gestion('actividades', 1),
