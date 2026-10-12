@@ -1,10 +1,13 @@
 from decimal import Decimal
+from types import SimpleNamespace
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
+from . import diagnostico
 from .models import Proyecto
 
 
@@ -193,3 +196,86 @@ class CrearProyectoWizardTests(TestCase):
         self.assertEqual(proyecto.actividades.count(), 0)
         self.assertEqual(proyecto.matriz_riesgos.count(), 0)
         self.assertIsNone(proyecto.presupuesto)
+
+
+def respuesta_api(texto, urls_buscador=()):
+    """Simula la respuesta de messages.create con un bloque de búsqueda web y uno de texto."""
+    return SimpleNamespace(content=[
+        SimpleNamespace(type='web_search_tool_result',
+                        content=[SimpleNamespace(url=u) for u in urls_buscador]),
+        SimpleNamespace(type='text', text=texto),
+    ])
+
+
+@override_settings(ANTHROPIC_API_KEY='clave-de-prueba')
+class GenerarDiagnosticoTests(TestCase):
+    def llamar(self, texto, urls=(), **kwargs):
+        with mock.patch('anthropic.Anthropic') as cliente:
+            cliente.return_value.messages.create.return_value = respuesta_api(texto, urls)
+            resultado = diagnostico.generar_diagnostico(
+                pais='HND', categoria='Público', nombre='Centro',
+                descripcion='Centro para adultos mayores en Choluteca', **kwargs,
+            )
+            return resultado, cliente.return_value.messages.create.call_args.kwargs
+
+    def test_incluye_contexto_y_fuentes_ampliadas(self):
+        _, llamada = self.llamar(
+            '{"cifras": "a", "antecedentes": "b", "necesidades": "c", "fuentes": []}',
+            contexto={'ods': ['3. Salud y bienestar'], 'articulacion_municipal': 'Plan Choluteca 2026', 'leyes': []},
+        )
+        prompt = llamada['messages'][0]['content']
+        self.assertIn('3. Salud y bienestar', prompt)
+        self.assertIn('Plan Choluteca 2026', prompt)
+        self.assertNotIn('Marco legal seleccionado', prompt)  # vacío: no se envía
+        dominios = llamada['tools'][0]['allowed_domains']
+        for dominio in ('ine.gob.hn', 'salud.gob.hn', 'worldbank.org', 'iadb.org', 'cepal.org'):
+            self.assertIn(dominio, dominios)
+        self.assertEqual(llamada['tools'][0]['max_uses'], diagnostico.MAX_BUSQUEDAS_COMPLETO)
+
+    def test_busqueda_por_seccion_devuelve_solo_esa_seccion(self):
+        resultado, llamada = self.llamar('{"cifras": "Dato 2024 (INE)", "fuentes": ["https://ine.gob.hn/x"]}', seccion='cifras')
+        self.assertEqual(resultado, {'cifras': 'Dato 2024 (INE)', 'fuentes': ['https://ine.gob.hn/x']})
+        self.assertEqual(llamada['tools'][0]['max_uses'], diagnostico.MAX_BUSQUEDAS_SECCION)
+        self.assertIn('UNA sola sección', llamada['messages'][0]['content'])
+
+    def test_extrae_json_aunque_haya_texto_alrededor(self):
+        texto = (
+            'Busqué en el INE.\n```json\n'
+            '{"cifras": "x", "antecedentes": "y", "necesidades": "z", "fuentes": []}\n```'
+        )
+        resultado, _ = self.llamar(texto)
+        self.assertEqual(resultado['necesidades'], 'z')
+
+    def test_sin_fuentes_citadas_usa_las_del_buscador(self):
+        urls = [f'https://ine.gob.hn/{i}' for i in range(15)]
+        resultado, _ = self.llamar('{"cifras": "x", "antecedentes": "y", "necesidades": "z"}', urls)
+        self.assertEqual(resultado['fuentes'], urls[:diagnostico.MAX_FUENTES_RESPALDO])
+
+    def test_el_salvador_usa_bcr_en_vez_de_digestyc(self):
+        self.assertIn('bcr.gob.sv', diagnostico.FUENTES_POR_PAIS['SLV'])
+        self.assertNotIn('digestyc.gob.sv', diagnostico.FUENTES_POR_PAIS['SLV'])
+
+
+class BuscarDiagnosticoVistaTests(TestCase):
+    def setUp(self):
+        self.client.force_login(User.objects.create_user('ana', password='clave-segura-123'))
+        self.url = reverse('buscar_diagnostico')
+
+    def test_envia_contexto_y_seccion(self):
+        with mock.patch('usuarios.views.generar_diagnostico', return_value={'cifras': 'x', 'fuentes': []}) as gen:
+            resp = self.client.post(self.url, {
+                'pais': 'COL', 'categoria': 'PUBLICO', 'nombre': 'Centro', 'descripcion': 'Desc',
+                'ods': ['3', '99'], 'leyes': ['Ley 100 de 1993'], 'articulacion_regional': 'Plan Cundinamarca',
+                'seccion': 'cifras',
+            })
+        self.assertEqual(resp.status_code, 200)
+        kwargs = gen.call_args.kwargs
+        self.assertEqual(kwargs['seccion'], 'cifras')
+        self.assertEqual(kwargs['categoria'], 'Público')
+        self.assertEqual(kwargs['contexto']['ods'], ['3. Salud y bienestar'])  # código inválido descartado
+        self.assertEqual(kwargs['contexto']['leyes'], ['Ley 100 de 1993'])
+        self.assertEqual(kwargs['contexto']['articulacion_regional'], 'Plan Cundinamarca')
+
+    def test_seccion_invalida(self):
+        resp = self.client.post(self.url, {'pais': 'COL', 'nombre': 'C', 'descripcion': 'D', 'seccion': 'otra'})
+        self.assertEqual(resp.status_code, 400)

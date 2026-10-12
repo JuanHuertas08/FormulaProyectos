@@ -256,7 +256,7 @@
 
         <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 shadow-sm flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-indigo-900">
-                {% trans "Busca automáticamente información oficial del organismo de planeación del país del proyecto y luego edita o amplía el texto en cada sección." %}
+                {% trans "Busca información en las fuentes oficiales del país (planeación, estadística y ministerios) y en CEPAL, Banco Mundial, BID y PNUD. Usa los datos del Paso 1: entre más específica sea la descripción (municipio, población objetivo, sector y problema), mejores resultados. Puedes buscar todo o una sola sección, y luego editar o ampliar el texto." %}
             </p>
             <button type="button" id="btnDiagnostico" onclick="buscarDiagnostico()"
                 class="px-5 py-2 bg-gradient-to-r from-indigo-700 to-indigo-500 text-white rounded-lg hover:brightness-110 shadow-md transition font-bold whitespace-nowrap">
@@ -267,27 +267,45 @@
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+            <div class="mb-3 flex flex-col items-start gap-2">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 shrink-0">1</span>
                 {% trans "Cifras y datos estadísticos" %}
             </h3>
+            <button type="button" onclick="buscarDiagnostico('cifras')" title="{% trans 'Buscar solo esta sección' %}"
+                class="btn-seccion text-xs font-bold text-indigo-700 border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition">
+                &#128269; {% trans "Buscar esta sección" %}
+            </button>
+            </div>
             {{ form.diagnostico_cifras }}
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
+            <div class="mb-3 flex flex-col items-start gap-2">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 shrink-0">2</span>
                 {% trans "Antecedentes (últimos 5 años)" %}
             </h3>
+            <button type="button" onclick="buscarDiagnostico('antecedentes')" title="{% trans 'Buscar solo esta sección' %}"
+                class="btn-seccion text-xs font-bold text-indigo-700 border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition">
+                &#128269; {% trans "Buscar esta sección" %}
+            </button>
+            </div>
             <p class="text-xs text-gray-400 mb-2">{% trans "Sociales, políticos, culturales, legales, ambientales y económicos." %}</p>
             {{ form.diagnostico_antecedentes }}
         </div>
 
         <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">3</span>
+            <div class="mb-3 flex flex-col items-start gap-2">
+            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                <span class="bg-gray-700 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2 shrink-0">3</span>
                 {% trans "Necesidades y desafíos" %}
             </h3>
+            <button type="button" onclick="buscarDiagnostico('necesidades')" title="{% trans 'Buscar solo esta sección' %}"
+                class="btn-seccion text-xs font-bold text-indigo-700 border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition">
+                &#128269; {% trans "Buscar esta sección" %}
+            </button>
+            </div>
             {{ form.diagnostico_necesidades }}
         </div>
         </div>
@@ -1014,7 +1032,9 @@
         if (loader.activo && !loader.el.contains(e.target)) loader.el.focus();
     });
 
-    function buscarDiagnostico() {
+    // seccion: 'cifras' | 'antecedentes' | 'necesidades' para buscar solo esa;
+    // sin argumento busca las tres.
+    function buscarDiagnostico(seccion) {
         const btn = document.getElementById('btnDiagnostico');
         const estado = document.getElementById('diagnostico-estado');
         const csrfEl = campo('csrfmiddlewaretoken');
@@ -1024,11 +1044,15 @@
             return;
         }
 
+        // Todo el contexto del Paso 1 orienta la búsqueda (se lee antes de que
+        // el loader deshabilite los campos)
         const datos = new URLSearchParams();
-        datos.append('pais', valor('pais'));
-        datos.append('categoria', valor('categoria'));
-        datos.append('nombre', valor('nombre'));
-        datos.append('descripcion', descripcionInput ? descripcionInput.value : '');
+        ['pais', 'categoria', 'nombre', 'descripcion', 'fecha_inicio', 'fecha_fin',
+         'articulacion_nacional', 'articulacion_regional', 'articulacion_municipal',
+         'articulacion_institucional', 'descripcion_detallada'].forEach(n => datos.append(n, valor(n)));
+        form.querySelectorAll('[name="objetivos_desarrollo"]:checked').forEach(c => datos.append('ods', c.value));
+        form.querySelectorAll('[name="leyes"]:checked').forEach(c => datos.append('leyes', c.value));
+        if (seccion) datos.append('seccion', seccion);
         datos.append('csrfmiddlewaretoken', csrfEl ? csrfEl.value : '');
 
         const controlador = new AbortController();
@@ -1048,9 +1072,12 @@
                 agregarContenido('id_diagnostico_antecedentes', data.antecedentes);
                 agregarContenido('id_diagnostico_necesidades', data.necesidades);
                 if (data.fuentes && data.fuentes.length) {
+                    // Acumular las fuentes de búsquedas sucesivas (por sección) sin repetir
                     const fuentesInput = document.getElementById('id_diagnostico_fuentes');
-                    if (fuentesInput) fuentesInput.value = data.fuentes.join('\n');
-                    pintarFuentes(data.fuentes);
+                    const previas = fuentesInput ? fuentesInput.value.split('\n').filter(Boolean) : [];
+                    const todas = [...new Set([...previas, ...data.fuentes])];
+                    if (fuentesInput) fuentesInput.value = todas.join('\n');
+                    pintarFuentes(todas);
                 }
                 estado.textContent = I18N.diagListo;
             })

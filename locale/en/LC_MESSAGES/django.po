@@ -913,3 +913,25 @@ msgstr "Saved at Step %(paso)s of 6"
 
 msgid "Continuar"
 msgstr "Continue"
+
+msgid "Buscar solo esta sección"
+msgstr "Search only this section"
+
+msgid "Buscar esta sección"
+msgstr "Search this section"
+
+msgid "Sección del diagnóstico no válida."
+msgstr "Invalid assessment section."
+
+msgid ""
+"Busca información en las fuentes oficiales del país (planeación, estadística"
+" y ministerios) y en CEPAL, Banco Mundial, BID y PNUD. Usa los datos del "
+"Paso 1: entre más específica sea la descripción (municipio, población "
+"objetivo, sector y problema), mejores resultados. Puedes buscar todo o una "
+"sola sección, y luego editar o ampliar el texto."
+msgstr ""
+"Search the country's official sources (planning, statistics and ministries) "
+"plus ECLAC, the World Bank, the IDB and UNDP. It uses your Step 1 data: the "
+"more specific the description (municipality, target population, sector and "
+"problem), the better the results. You can search everything or a single "
+"section, then edit or expand the text."

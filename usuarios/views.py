@@ -4,11 +4,12 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
 from .forms import RegistroForm, Paso1ProjectForm, ActividadFormSet, RubroFormSet, RiesgoFormSet
 from .models import Perfil, Proyecto, DocumentoSoporte
-from .diagnostico import generar_diagnostico, DiagnosticoError, FUENTES_POR_PAIS
+from .diagnostico import generar_diagnostico, DiagnosticoError, FUENTES_POR_PAIS, SECCIONES as SECCIONES_DIAGNOSTICO
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.http import JsonResponse
+from django.utils import translation
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 
@@ -51,22 +52,44 @@ def obtener_leyes_por_pais(request):
 @login_required
 @require_POST
 def buscar_diagnostico(request):
-    """Genera (vía IA + búsqueda web restringida a fuentes oficiales de
-    planeación) el diagnóstico de contexto del Paso 2, a partir de los datos
-    del proyecto capturados en el Paso 1."""
+    """Genera (vía IA + búsqueda web restringida a fuentes oficiales) el
+    diagnóstico de contexto del Paso 2 a partir de los datos del Paso 1.
+    Con el parámetro "seccion" genera solo esa sección."""
     pais = request.POST.get('pais', '')
-    categoria = request.POST.get('categoria', '')
-    nombre = request.POST.get('nombre', '')
-    descripcion = request.POST.get('descripcion', '')
+    nombre = request.POST.get('nombre', '').strip()
+    descripcion = request.POST.get('descripcion', '').strip()
+    seccion = request.POST.get('seccion') or None
 
     if pais not in FUENTES_POR_PAIS:
         return JsonResponse({'error': _('Selecciona primero el país del proyecto.')}, status=400)
     if not nombre or not descripcion:
         return JsonResponse({'error': _('Completa el nombre y la descripción del proyecto en el Paso 1.')}, status=400)
+    if seccion and seccion not in SECCIONES_DIAGNOSTICO:
+        return JsonResponse({'error': _('Sección del diagnóstico no válida.')}, status=400)
+
+    # La IA trabaja en español: enviar las etiquetas (no los códigos) en español
+    with translation.override('es'):
+        etiquetas_ods = dict(Paso1ProjectForm.ODS_CHOICES)
+        etiquetas_categoria = dict(Paso1ProjectForm.CATEGORIA_CHOICES)
+        categoria = str(etiquetas_categoria.get(request.POST.get('categoria', ''), ''))
+        ods = [str(etiquetas_ods[c]) for c in request.POST.getlist('ods') if c in etiquetas_ods]
+
+    contexto = {
+        'fecha_inicio': request.POST.get('fecha_inicio', ''),
+        'fecha_fin': request.POST.get('fecha_fin', ''),
+        'ods': ods,
+        'leyes': request.POST.getlist('leyes'),
+        'articulacion_nacional': request.POST.get('articulacion_nacional', ''),
+        'articulacion_regional': request.POST.get('articulacion_regional', ''),
+        'articulacion_municipal': request.POST.get('articulacion_municipal', ''),
+        'articulacion_institucional': request.POST.get('articulacion_institucional', ''),
+        'descripcion_detallada': request.POST.get('descripcion_detallada', ''),
+    }
 
     try:
         resultado = generar_diagnostico(
             pais=pais, categoria=categoria, nombre=nombre, descripcion=descripcion,
+            contexto=contexto, seccion=seccion,
         )
     except DiagnosticoError as exc:
         return JsonResponse({'error': str(exc)}, status=503)
