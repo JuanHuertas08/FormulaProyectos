@@ -369,3 +369,17 @@ class ProbarDiagnosticoComandoTests(TestCase):
         texto = salida.getvalue()
         self.assertIn('toda la web', texto)
         self.assertIn('antecedentes: VACÍA', texto)
+
+
+@override_settings(ANTHROPIC_API_KEY='clave-de-prueba')
+class CredencialInvalidaTests(TestCase):
+    def test_401_da_mensaje_de_configuracion(self):
+        import anthropic
+        import httpx2
+
+        respuesta = httpx2.Response(401, request=httpx2.Request('POST', 'https://api.anthropic.com/v1/messages'))
+        error = anthropic.AuthenticationError('invalid x-api-key', response=respuesta, body=None)
+        with mock.patch('anthropic.Anthropic') as cliente:
+            cliente.return_value.with_options.return_value.beta.messages.create.side_effect = error
+            with self.assertRaisesMessage(diagnostico.DiagnosticoError, 'credencial inválida'):
+                diagnostico.generar_diagnostico(pais='HND', categoria='', nombre='C', descripcion='D')

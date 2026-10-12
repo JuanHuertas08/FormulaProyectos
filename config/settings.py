@@ -157,7 +157,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Búsqueda con IA (Paso 2 del wizard: diagnóstico de contexto). Sin esta clave
 # configurada, el botón de búsqueda muestra un mensaje de "no configurado" en
 # vez de fallar de forma silenciosa o inesperada.
-ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+# strip(): al pegar la clave en el panel de Render es fácil arrastrar espacios o saltos de línea
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '').strip()
 
 # Seguridad en producción (Render sirve la app detrás de un proxy HTTPS)
 if not DEBUG:

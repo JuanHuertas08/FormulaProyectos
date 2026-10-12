@@ -286,6 +286,14 @@ def _llamar_api(client, *, prompt, max_busquedas, dominios):
                 'Diagnóstico: error %s de la API (request_id=%s): %s',
                 exc.status_code, getattr(exc, 'request_id', None), exc.message,
             )
+            if exc.status_code in (401, 403):
+                # Clave inválida, revocada o sin permisos: no se resuelve reintentando
+                raise DiagnosticoError(
+                    'La búsqueda automática no está disponible por un problema de '
+                    'configuración del servicio (credencial inválida). Avisa al '
+                    'administrador del sistema; mientras tanto puedes completar el '
+                    'diagnóstico manualmente.'
+                ) from exc
             raise DiagnosticoError('No se pudo contactar el servicio de búsqueda. Intenta de nuevo.') from exc
         except anthropic.APIConnectionError as exc:
             logger.exception('Diagnóstico: error de conexión con la API')
