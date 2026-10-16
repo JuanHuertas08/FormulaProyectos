@@ -470,3 +470,20 @@ class CorreoUnicoTests(TestCase):
                      email='otra@example.com', confirmar_email='otra@example.com')
         resp = self.client.post(reverse('register'), datos)
         self.assertRedirects(resp, reverse('login'))
+
+
+class RecuperacionConRegistroTests(TestCase):
+    def test_correo_sin_cuenta_queda_en_logs_enmascarado(self):
+        with self.assertLogs('usuarios.forms', level='INFO') as logs:
+            resp = self.client.post(reverse('password_reset'), {'email': 'nadie@example.com'})
+        self.assertRedirects(resp, reverse('password_reset_done'))
+        self.assertIn('n***@example.com no corresponde a ninguna cuenta', logs.output[0])
+
+    def test_correo_con_cuenta_envia_y_registra(self):
+        from django.core import mail
+
+        User.objects.create_user('ana', email='ana@example.com', password='clave-segura-123')
+        with self.assertLogs('usuarios.forms', level='INFO') as logs:
+            self.client.post(reverse('password_reset'), {'email': 'ana@example.com'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Enviando correo de recuperación de contraseña a ana', logs.output[0])

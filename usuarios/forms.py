@@ -1,8 +1,12 @@
+import logging
+
 from django import forms
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from .correos import enmascarar_correo
 from .models import validar_descripcion_minima, Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
 
 class RegistroForm(forms.ModelForm):
@@ -64,6 +68,26 @@ class RegistroForm(forms.ModelForm):
         if cleaned_data.get("password") != cleaned_data.get("confirmar_password"):
             raise ValidationError(_("Las contraseñas no coinciden."))
         return cleaned_data
+
+logger = logging.getLogger(__name__)
+
+
+class PasswordResetConRegistro(PasswordResetForm):
+    """Recuperación de contraseña de Django con trazas en los logs: Django no
+    dice nada (ni en pantalla, por seguridad, ni en logs) cuando el correo no
+    corresponde a ninguna cuenta, lo que hace difícil diagnosticar un envío."""
+
+    def get_users(self, email):
+        usuarios = list(super().get_users(email))
+        if not usuarios:
+            logger.info('Recuperación de contraseña: %s no corresponde a ninguna cuenta activa', enmascarar_correo(email))
+        return usuarios
+
+    def send_mail(self, *args, **kwargs):
+        usuario = kwargs.get('context', args[2] if len(args) > 2 else {}).get('user')
+        logger.info('Enviando correo de recuperación de contraseña a %s', getattr(usuario, 'username', '?'))
+        super().send_mail(*args, **kwargs)
+
 
 class DynamicMultipleChoiceField(forms.MultipleChoiceField):
     """MultipleChoiceField cuyas opciones válidas se cargan por JS en tiempo de ejecución

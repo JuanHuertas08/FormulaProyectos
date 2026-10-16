@@ -17,6 +17,7 @@ def enviar_bienvenida(request, usuario):
     que el usuario se registró. Si el envío falla no interrumpe el registro:
     devuelve False y deja el error en los logs."""
     if not usuario.email:
+        logger.warning('Correo de bienvenida no enviado: %s no tiene correo', usuario.username)
         return False
 
     idioma = getattr(request, 'LANGUAGE_CODE', None) or settings.LANGUAGE_CODE
@@ -33,6 +34,7 @@ def enviar_bienvenida(request, usuario):
 
     correo = EmailMultiAlternatives(asunto, texto, settings.DEFAULT_FROM_EMAIL, [usuario.email])
     correo.attach_alternative(html, 'text/html')
+    logger.info('Enviando correo de bienvenida a %s (%s)', usuario.username, settings.EMAIL_BACKEND)
     try:
         correo.send()
     except Exception:
@@ -41,3 +43,9 @@ def enviar_bienvenida(request, usuario):
         return False
     logger.info('Correo de bienvenida enviado a %s', usuario.username)
     return True
+
+
+def enmascarar_correo(email):
+    """'ana.perez@gmail.com' -> 'a***@gmail.com' (para logs sin datos personales completos)."""
+    usuario, _sep, dominio = (email or '').partition('@')
+    return f'{usuario[:1]}***@{dominio}' if dominio else '***'
