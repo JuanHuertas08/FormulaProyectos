@@ -38,6 +38,16 @@ class RegistroForm(forms.ModelForm):
             raise ValidationError(_('Ese nombre de usuario ya está en uso.'))
         return username
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        # Un correo por cuenta (el modelo User no lo exige); sin distinguir mayúsculas
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise ValidationError(_(
+                'Ya existe una cuenta registrada con este correo electrónico. '
+                'Si es tuya, inicia sesión o recupera tu contraseña.'
+            ))
+        return email
+
     @classmethod
     def errores_username(cls, valor):
         """Errores de validación del nombre de usuario (formato, longitud y

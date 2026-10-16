@@ -451,3 +451,22 @@ class ValidarUsuarioTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('username', resp.context['form'].errors)
         self.assertEqual(User.objects.filter(username__iexact='ana.perez').count(), 1)
+
+
+class CorreoUnicoTests(TestCase):
+    def setUp(self):
+        User.objects.create_user('existente', email='ana@example.com', password='clave-segura-123')
+
+    def test_rechaza_correo_registrado_sin_distinguir_mayusculas(self):
+        datos = dict(CorreoBienvenidaTests.datos, username='otra.ana',
+                     email='ANA@Example.com', confirmar_email='ANA@Example.com')
+        resp = self.client.post(reverse('register'), datos)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('Ya existe una cuenta registrada con este correo', resp.context['form'].errors['email'][0])
+        self.assertFalse(User.objects.filter(username='otra.ana').exists())
+
+    def test_acepta_correo_nuevo(self):
+        datos = dict(CorreoBienvenidaTests.datos, username='otra.ana',
+                     email='otra@example.com', confirmar_email='otra@example.com')
+        resp = self.client.post(reverse('register'), datos)
+        self.assertRedirects(resp, reverse('login'))

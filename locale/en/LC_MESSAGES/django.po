@@ -1105,3 +1105,10 @@ msgstr "Show password"
 
 msgid "Ocultar contraseña"
 msgstr "Hide password"
+
+msgid ""
+"Ya existe una cuenta registrada con este correo electrónico. Si es tuya, "
+"inicia sesión o recupera tu contraseña."
+msgstr ""
+"An account with this email address already exists. If it is yours, sign in "
+"or reset your password."
