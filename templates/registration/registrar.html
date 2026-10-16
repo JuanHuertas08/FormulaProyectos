@@ -145,6 +145,34 @@
 
         .errorlist { color: #b91c1c; list-style: none; padding: 0; font-size: 0.8rem; margin-bottom: 10px; }
 
+        /* Validación en vivo del nombre de usuario */
+        .estado-usuario { margin-top: 6px; font-size: 0.8rem; font-weight: 600; min-height: 1em; }
+        .estado-usuario.ok { color: #047857; }
+        .estado-usuario.error { color: #b91c1c; }
+        .estado-usuario.cargando { color: var(--text-muted); font-weight: 400; }
+        input.campo-ok { border-color: #10b981; }
+        input.campo-error { border-color: #dc2626; background-color: #fef2f2; }
+
+        /* Campo de contraseña con botón para mostrar/ocultar */
+        .campo-clave { position: relative; display: flex; flex-direction: column; }
+        .campo-clave input { padding-right: 46px; }
+        .campo-clave .ver-clave {
+            all: unset;
+            position: absolute;
+            right: 8px;
+            bottom: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .campo-clave .ver-clave:hover { color: var(--dark-orange); background: rgba(194, 65, 12, 0.08); }
+        .campo-clave .ver-clave:focus-visible { outline: 2px solid var(--mid-orange); outline-offset: 1px; }
+
         .lang-switcher {
             position: absolute;
             top: 18px;
@@ -208,5 +236,83 @@
             {% trans "¿Ya tienes una cuenta?" %} <a href="{% url 'login' %}">{% trans "Inicia sesión" %}</a>
         </div>
     </div>
+
+<script>
+    const TEXTOS = {
+        verificando: "{% trans 'Verificando disponibilidad...' %}",
+        disponible: "{% trans 'Nombre de usuario disponible.' %}",
+        noVerificado: "{% trans 'No se pudo verificar el nombre de usuario en este momento.' %}",
+        mostrar: "{% trans 'Mostrar contraseña' %}",
+        ocultar: "{% trans 'Ocultar contraseña' %}"
+    };
+
+    // --- Validación del nombre de usuario al salir del campo ---
+    const usuarioInput = document.querySelector('[name="username"]');
+    if (usuarioInput) {
+        const estado = document.createElement('div');
+        estado.className = 'estado-usuario';
+        estado.setAttribute('aria-live', 'polite');
+        estado.id = 'estado-usuario';
+        usuarioInput.setAttribute('aria-describedby', 'estado-usuario');
+        usuarioInput.insertAdjacentElement('afterend', estado);
+
+        let ultimoValidado = null;
+        let consulta = null;
+        const marcar = (clase, texto) => {
+            estado.className = `estado-usuario ${clase}`;
+            estado.textContent = texto;
+            usuarioInput.classList.toggle('campo-ok', clase === 'ok');
+            usuarioInput.classList.toggle('campo-error', clase === 'error');
+            usuarioInput.setAttribute('aria-invalid', clase === 'error' ? 'true' : 'false');
+        };
+
+        const validarUsuario = () => {
+            const valor = usuarioInput.value.trim();
+            if (valor === ultimoValidado) return;
+            ultimoValidado = valor;
+            if (consulta) consulta.abort();
+            consulta = new AbortController();
+            marcar('cargando', TEXTOS.verificando);
+            fetch(`{% url 'validar_usuario' %}?username=${encodeURIComponent(valor)}`, { signal: consulta.signal })
+                .then(resp => resp.json())
+                .then(data => marcar(data.disponible ? 'ok' : 'error', data.disponible ? `✓ ${data.mensaje}` : data.mensaje))
+                .catch(err => { if (err.name !== 'AbortError') marcar('cargando', TEXTOS.noVerificado); });
+        };
+
+        usuarioInput.addEventListener('blur', validarUsuario);
+        // Al volver a escribir se limpia el resultado anterior
+        usuarioInput.addEventListener('input', () => {
+            ultimoValidado = null;
+            marcar('', '');
+        });
+    }
+
+    // --- Ícono del ojo para mostrar/ocultar las contraseñas ---
+    const OJO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+    const OJO_TACHADO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6.5 0-10-7-10-7a18.4 18.4 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="2" y1="2" x2="22" y2="22"/></svg>';
+
+    document.querySelectorAll('input[type="password"]').forEach(input => {
+        const envoltura = document.createElement('div');
+        envoltura.className = 'campo-clave';
+        input.parentNode.insertBefore(envoltura, input);
+        envoltura.appendChild(input);
+
+        const boton = document.createElement('button');
+        boton.type = 'button';
+        boton.className = 'ver-clave';
+        boton.innerHTML = OJO;
+        boton.setAttribute('aria-label', TEXTOS.mostrar);
+        boton.setAttribute('aria-pressed', 'false');
+        boton.addEventListener('click', () => {
+            const visible = input.type === 'password';
+            input.type = visible ? 'text' : 'password';
+            boton.innerHTML = visible ? OJO_TACHADO : OJO;
+            boton.setAttribute('aria-label', visible ? TEXTOS.ocultar : TEXTOS.mostrar);
+            boton.setAttribute('aria-pressed', String(visible));
+            input.focus();
+        });
+        envoltura.appendChild(boton);
+    });
+</script>
 </body>
 </html>

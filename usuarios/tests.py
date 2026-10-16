@@ -419,3 +419,35 @@ class CorreoBienvenidaTests(TestCase):
             resp = self.client.post(reverse('register'), self.datos)
         self.assertRedirects(resp, reverse('login'))
         self.assertTrue(User.objects.filter(username='nuevo').exists())
+
+
+class ValidarUsuarioTests(TestCase):
+    def setUp(self):
+        User.objects.create_user('ana.perez', password='clave-segura-123')
+        self.url = reverse('validar_usuario')
+
+    def consultar(self, valor):
+        return self.client.get(self.url, {'username': valor}).json()
+
+    def test_disponible(self):
+        self.assertEqual(self.consultar('juan_2026')['disponible'], True)
+
+    def test_en_uso_sin_distinguir_mayusculas(self):
+        respuesta = self.consultar('Ana.Perez')
+        self.assertFalse(respuesta['disponible'])
+        self.assertIn('ya está en uso', respuesta['mensaje'])
+
+    def test_formato_invalido(self):
+        respuesta = self.consultar('ana perez')
+        self.assertFalse(respuesta['disponible'])
+        self.assertIn('sin espacios', respuesta['mensaje'])
+
+    def test_vacio(self):
+        self.assertFalse(self.consultar('')['disponible'])
+
+    def test_registro_rechaza_duplicado_con_otras_mayusculas(self):
+        datos = dict(CorreoBienvenidaTests.datos, username='ANA.PEREZ')
+        resp = self.client.post(reverse('register'), datos)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn('username', resp.context['form'].errors)
+        self.assertEqual(User.objects.filter(username__iexact='ana.perez').count(), 1)

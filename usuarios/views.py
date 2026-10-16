@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.utils import translation
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 # Relaciona cada campo de archivo del Paso 1 con su sección de DocumentoSoporte
 SECCIONES_SOPORTE = {
@@ -96,6 +96,16 @@ def buscar_diagnostico(request):
         return JsonResponse({'error': str(exc)}, status=503)
 
     return JsonResponse(resultado)
+
+@require_GET
+def validar_usuario(request):
+    """Validación en vivo del nombre de usuario en el registro: devuelve si
+    está disponible o el primer error (formato, longitud o ya en uso)."""
+    errores = RegistroForm.errores_username(request.GET.get('username', '').strip())
+    if errores:
+        return JsonResponse({'disponible': False, 'mensaje': str(errores[0])})
+    return JsonResponse({'disponible': True, 'mensaje': _('Nombre de usuario disponible.')})
+
 
 def home(request):
     """Página de inicio del sistema."""

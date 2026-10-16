@@ -1084,3 +1084,24 @@ msgstr "Sign in to InvestProject"
 
 msgid "Si el botón no funciona, copia este enlace en tu navegador:"
 msgstr "If the button doesn't work, copy this link into your browser:"
+
+msgid "Ese nombre de usuario ya está en uso."
+msgstr "That username is already taken."
+
+msgid "Usa solo letras, números y los caracteres @ . + - _ (sin espacios)."
+msgstr "Use only letters, numbers and the characters @ . + - _ (no spaces)."
+
+msgid "Nombre de usuario disponible."
+msgstr "Username available."
+
+msgid "Verificando disponibilidad..."
+msgstr "Checking availability..."
+
+msgid "No se pudo verificar el nombre de usuario en este momento."
+msgstr "The username couldn't be checked right now."
+
+msgid "Mostrar contraseña"
+msgstr "Show password"
+
+msgid "Ocultar contraseña"
+msgstr "Hide password"

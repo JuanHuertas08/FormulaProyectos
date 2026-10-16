@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from .models import validar_descripcion_minima, Proyecto, DocumentoSoporte, ActividadCronograma, RubroPresupuesto, RiesgoProyecto
@@ -19,6 +20,32 @@ class RegistroForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'nombres', 'apellidos', 'email', 'telefono']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Mismo criterio que Django (letras, números y @ . + - _) con un mensaje
+        # más claro que el de la traducción por defecto
+        campo = self.fields['username']
+        campo.validators = [v for v in campo.validators if not isinstance(v, UnicodeUsernameValidator)]
+        campo.validators.append(UnicodeUsernameValidator(
+            message=_('Usa solo letras, números y los caracteres @ . + - _ (sin espacios).'),
+        ))
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '')
+        # El modelo User distingue mayúsculas; aquí se evita registrar "Ana" si ya existe "ana"
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError(_('Ese nombre de usuario ya está en uso.'))
+        return username
+
+    @classmethod
+    def errores_username(cls, valor):
+        """Errores de validación del nombre de usuario (formato, longitud y
+        disponibilidad), con las mismas reglas que al enviar el registro. Lo
+        usa la validación en vivo del formulario (api/validar-usuario/)."""
+        form = cls(data={'username': valor})
+        form.is_valid()
+        return form.errors.get('username', [])
 
     def clean(self):
         cleaned_data = super().clean()
