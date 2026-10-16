@@ -18,6 +18,10 @@ services:
           property: connectionString
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
 
 databases:
   - name: formulaproyectos-db

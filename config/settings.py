@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'anymail',
     'usuarios',
 ]
 
@@ -150,9 +151,20 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / "media"
 
-# En desarrollo, los correos se imprimen en la consola en vez de enviarse
-# (evita depender de un servidor SMTP real mientras no haya costos de nube).
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Correo: en producción se envía con Brevo por su API HTTPS (Render bloquea los
+# puertos SMTP en el plan gratuito). Sin BREVO_API_KEY (desarrollo local), los
+# correos se imprimen en la consola en vez de enviarse.
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
+if BREVO_API_KEY:
+    EMAIL_BACKEND = 'anymail.backends.brevo.EmailBackend'
+    ANYMAIL = {'BREVO_API_KEY': BREVO_API_KEY}
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Remitente de los correos. Debe ser un remitente verificado en Brevo, p. ej.
+# "InvestProject <tu-correo@gmail.com>".
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'InvestProject <no-reply@localhost>')
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # Búsqueda con IA (Paso 2 del wizard: diagnóstico de contexto). Sin esta clave
 # configurada, el botón de búsqueda muestra un mensaje de "no configurado" en

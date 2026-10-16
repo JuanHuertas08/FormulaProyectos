@@ -4,6 +4,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
 from .forms import RegistroForm, Paso1ProjectForm, ActividadFormSet, RubroFormSet, RiesgoFormSet
 from .models import Perfil, Proyecto, DocumentoSoporte
+from .correos import enviar_bienvenida
 from .diagnostico import generar_diagnostico, DiagnosticoError, FUENTES_POR_PAIS, SECCIONES as SECCIONES_DIAGNOSTICO
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -119,6 +120,9 @@ def registrar_usuario(request):
             perfil.ciudad = form.cleaned_data.get('ciudad')
             perfil.fecha_nacimiento = form.cleaned_data.get('fecha_nacimiento')
             perfil.save()
+
+            # El registro no depende del correo: si falla, solo queda en los logs
+            enviar_bienvenida(request, user)
 
             messages.success(request, _("¡Cuenta creada con éxito!"))
             return redirect('login')

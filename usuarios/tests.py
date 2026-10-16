@@ -383,3 +383,39 @@ class CredencialInvalidaTests(TestCase):
             cliente.return_value.with_options.return_value.beta.messages.create.side_effect = error
             with self.assertRaisesMessage(diagnostico.DiagnosticoError, 'credencial inválida'):
                 diagnostico.generar_diagnostico(pais='HND', categoria='', nombre='C', descripcion='D')
+
+
+class CorreoBienvenidaTests(TestCase):
+    datos = {
+        'username': 'nuevo', 'nombres': 'Ana', 'apellidos': 'Pérez',
+        'email': 'ana@example.com', 'confirmar_email': 'ana@example.com',
+        'telefono': '+504 9999-9999', 'fecha_nacimiento': '1990-01-01',
+        'pais': 'Honduras', 'ciudad': 'Tegucigalpa',
+        'password': 'Clave-Segura-123', 'confirmar_password': 'Clave-Segura-123',
+    }
+
+    def test_registro_envia_bienvenida(self):
+        from django.core import mail
+
+        resp = self.client.post(reverse('register'), self.datos)
+        self.assertRedirects(resp, reverse('login'))
+        self.assertEqual(len(mail.outbox), 1)
+        correo = mail.outbox[0]
+        self.assertEqual(correo.to, ['ana@example.com'])
+        self.assertEqual(correo.subject, 'Bienvenido a InvestProject')
+        self.assertIn('Hola Ana', correo.body)
+        self.assertIn('http://testserver/usuarios/login/', correo.body)
+        html = correo.alternatives[0][0]
+        self.assertIn('Ingresar a InvestProject', html)
+
+    def test_bienvenida_en_ingles(self):
+        from django.core import mail
+
+        self.client.post(reverse('register'), self.datos, HTTP_ACCEPT_LANGUAGE='en')
+        self.assertEqual(mail.outbox[0].subject, 'Welcome to InvestProject')
+
+    def test_si_falla_el_envio_la_cuenta_se_crea_igual(self):
+        with mock.patch('django.core.mail.EmailMultiAlternatives.send', side_effect=ConnectionError('Brevo caído')):
+            resp = self.client.post(reverse('register'), self.datos)
+        self.assertRedirects(resp, reverse('login'))
+        self.assertTrue(User.objects.filter(username='nuevo').exists())

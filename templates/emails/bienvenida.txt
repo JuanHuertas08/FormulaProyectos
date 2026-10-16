@@ -1,0 +1,11 @@
+{% load i18n %}{% autoescape off %}{% blocktrans %}Hola {{ nombre }},{% endblocktrans %}
+
+{% trans "Tu cuenta en InvestProject fue creada con éxito. Ya puedes ingresar al Asistente de Formulación para crear y gestionar tus proyectos paso a paso." %}
+
+{% trans "Usuario:" %} {{ usuario }}
+{% trans "Ingresa aquí:" %} {{ url_login }}
+
+{% trans "Si no creaste esta cuenta, ignora este mensaje." %}
+
+{% trans "El equipo de InvestProject" %}
+{% endautoescape %}

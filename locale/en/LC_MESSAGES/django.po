@@ -1052,3 +1052,35 @@ msgstr "Select the Sustainable Development Goals the project contributes to"
 
 msgid "seleccionados"
 msgstr "selected"
+
+msgid "Bienvenido a InvestProject"
+msgstr "Welcome to InvestProject"
+
+#, python-format
+msgid "Hola %(nombre)s,"
+msgstr "Hi %(nombre)s,"
+
+msgid ""
+"Tu cuenta en InvestProject fue creada con éxito. Ya puedes ingresar al "
+"Asistente de Formulación para crear y gestionar tus proyectos paso a paso."
+msgstr ""
+"Your InvestProject account was created successfully. You can now sign in to "
+"the Formulation Assistant to create and manage your projects step by step."
+
+msgid "Usuario:"
+msgstr "Username:"
+
+msgid "Ingresa aquí:"
+msgstr "Sign in here:"
+
+msgid "Si no creaste esta cuenta, ignora este mensaje."
+msgstr "If you didn't create this account, please ignore this message."
+
+msgid "El equipo de InvestProject"
+msgstr "The InvestProject team"
+
+msgid "Ingresar a InvestProject"
+msgstr "Sign in to InvestProject"
+
+msgid "Si el botón no funciona, copia este enlace en tu navegador:"
+msgstr "If the button doesn't work, copy this link into your browser:"
