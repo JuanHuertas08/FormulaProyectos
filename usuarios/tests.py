@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from types import SimpleNamespace
 from unittest import mock
@@ -487,3 +488,46 @@ class RecuperacionConRegistroTests(TestCase):
             self.client.post(reverse('password_reset'), {'email': 'ana@example.com'})
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Enviando correo de recuperación de contraseña a ana', logs.output[0])
+
+
+class AsegurarSuperusuarioTests(TestCase):
+    VARIABLES = {
+        'DJANGO_SUPERUSER_USERNAME': 'admin_ip',
+        'DJANGO_SUPERUSER_EMAIL': 'admin@example.com',
+        'DJANGO_SUPERUSER_PASSWORD': 'Clave-Muy-Segura-2026',
+    }
+
+    def ejecutar(self, **variables):
+        from io import StringIO
+        from django.core.management import call_command
+
+        salida = StringIO()
+        with mock.patch.dict('os.environ', variables, clear=False):
+            call_command('asegurar_superusuario', stdout=salida, stderr=salida)
+        return salida.getvalue()
+
+    def test_crea_superusuario(self):
+        self.assertIn('creado', self.ejecutar(**self.VARIABLES))
+        usuario = User.objects.get(username='admin_ip')
+        self.assertTrue(usuario.is_superuser and usuario.is_staff)
+        self.assertTrue(usuario.check_password('Clave-Muy-Segura-2026'))
+
+    def test_restablece_contrasena_si_ya_existe(self):
+        User.objects.create_user('Admin_IP', password='otra-clave-antigua-1')
+        self.assertIn('restablecida', self.ejecutar(**self.VARIABLES))
+        usuario = User.objects.get(username='Admin_IP')
+        self.assertTrue(usuario.is_superuser)
+        self.assertTrue(usuario.check_password('Clave-Muy-Segura-2026'))
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_sin_variables_no_hace_nada(self):
+        with mock.patch.dict('os.environ', {}, clear=False):
+            for nombre in self.VARIABLES:
+                os.environ.pop(nombre, None)
+            self.assertIn('se omite', self.ejecutar())
+        self.assertFalse(User.objects.exists())
+
+    def test_contrasena_debil_no_se_aplica(self):
+        salida = self.ejecutar(**dict(self.VARIABLES, DJANGO_SUPERUSER_PASSWORD='123'))
+        self.assertIn('no cumple', salida)
+        self.assertFalse(User.objects.exists())
