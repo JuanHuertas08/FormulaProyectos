@@ -190,5 +190,8 @@ LOGGING = {
     },
     'loggers': {
         'usuarios': {'handlers': ['console'], 'level': 'INFO'},
+        # Errores de Django en producción (500, fallos al enviar el correo de
+        # recuperación de contraseña, etc.); por defecto solo se ven con DEBUG.
+        'django': {'handlers': ['console'], 'level': 'WARNING'},
     },
 }
